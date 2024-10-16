@@ -12,6 +12,8 @@ interface Piercing {
   image: string;
 }
 
+const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com';
+
 const PiercingPortfolio = () => {
   const [piercings, setPiercings] = useState<Piercing[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -22,8 +24,11 @@ const PiercingPortfolio = () => {
   useEffect(() => {
     const fetchPiercings = async () => {
       try {
-        // Obtener el token de acceso
-        const tokenResponse = await fetch('https://vinilos-backend-2cwk.onrender.com/api/token/', {
+        setLoading(true);
+        setError(null);
+
+        console.log('Iniciando solicitud de token...');
+        const tokenResponse = await fetch(`${API_BASE_URL}/api/token/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -34,28 +39,33 @@ const PiercingPortfolio = () => {
           }),
         });
 
+        console.log('Respuesta de token recibida:', tokenResponse.status);
         if (!tokenResponse.ok) {
-          throw new Error('Failed to obtain access token');
+          throw new Error(`Failed to obtain access token. Status: ${tokenResponse.status}`);
         }
 
         const { access } = await tokenResponse.json();
+        console.log('Token obtenido exitosamente');
 
-        // Obtener los datos de los piercings
-        const piercingsResponse = await fetch('https://vinilos-backend-2cwk.onrender.com/api/piercs/piercings', {
+        console.log('Iniciando solicitud de piercings...');
+        const piercingsResponse = await fetch(`${API_BASE_URL}/api/piercs/piercings`, {
           headers: {
             'Authorization': `Bearer ${access}`,
           },
         });
 
+        console.log('Respuesta de piercings recibida:', piercingsResponse.status);
         if (!piercingsResponse.ok) {
-          throw new Error('Failed to fetch piercings data');
+          throw new Error(`Failed to fetch piercings data. Status: ${piercingsResponse.status}`);
         }
 
         const piercingsData = await piercingsResponse.json();
+        console.log('Datos de piercings obtenidos:', piercingsData.length);
         setPiercings(piercingsData);
-        setLoading(false);
       } catch (err) {
+        console.error('Error detallado:', err);
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      } finally {
         setLoading(false);
       }
     };
@@ -84,7 +94,11 @@ const PiercingPortfolio = () => {
 
   if (error) {
     return <div className="min-h-screen bg-gradient-to-br from-[#9370DB] via-[#8A5CD8] to-[#663399] flex items-center justify-center">
-      <p className="text-white text-2xl">Error: {error}</p>
+      <div className="text-white text-center">
+        <p className="text-2xl mb-4">Error: {error}</p>
+        <p className="text-lg">Por favor, intenta recargar la página. Si el problema persiste, contacta al administrador.</p>
+        <p className="text-sm mt-4">Detalles técnicos: Revisa la consola del navegador para más información.</p>
+      </div>
     </div>;
   }
 
@@ -98,42 +112,48 @@ const PiercingPortfolio = () => {
           <h1 className="text-4xl font-bold text-center text-white">Catálogo de Piercings</h1>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {currentPiercings.map((piercing) => (
-            <div key={piercing.id} className="bg-white bg-opacity-10 backdrop-blur-md rounded-lg shadow-lg overflow-hidden flex flex-col">
-              <img src={piercing.image} alt={piercing.name} className="w-full h-64 object-cover" />
-              <div className="p-6 flex-grow flex flex-col">
-                <h2 className="text-xl font-semibold text-white mb-2">{piercing.name}</h2>
-                <p className="text-gray-200 mb-3 flex-grow">{piercing.description}</p>
-                <p className="text-lg font-bold text-white mb-4">Precio: ${piercing.price}</p>
-                <a
-                  href={getWhatsAppLink(piercing.name, piercing.price)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full text-center bg-purple-500 text-white font-bold py-2 px-4 rounded-full hover:bg-purple-600 transition duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-                >
-                  Comprar
-                </a>
-              </div>
+        {piercings.length === 0 ? (
+          <p className="text-white text-center text-xl">No se encontraron piercings disponibles.</p>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+              {currentPiercings.map((piercing) => (
+                <div key={piercing.id} className="bg-white bg-opacity-10 backdrop-blur-md rounded-lg shadow-lg overflow-hidden flex flex-col">
+                  <img src={piercing.image} alt={piercing.name} className="w-full h-64 object-cover" />
+                  <div className="p-6 flex-grow flex flex-col">
+                    <h2 className="text-xl font-semibold text-white mb-2">{piercing.name}</h2>
+                    <p className="text-gray-200 mb-3 flex-grow">{piercing.description}</p>
+                    <p className="text-lg font-bold text-white mb-4">Precio: ${piercing.price}</p>
+                    <a
+                      href={getWhatsAppLink(piercing.name, piercing.price)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full text-center bg-purple-500 text-white font-bold py-2 px-4 rounded-full hover:bg-purple-600 transition duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                    >
+                      Comprar
+                    </a>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        <div className="flex justify-center mb-12">
-          {Array.from({ length: Math.ceil(piercings.length / piercingsPerPage) }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => paginate(i + 1)}
-              className={`mx-1 px-4 py-2 rounded-full ${
-                currentPage === i + 1
-                  ? 'bg-white text-[#9370DB]'
-                  : 'bg-[#8A5CD8] text-white hover:bg-[#7B4ECF]'
-              } transition duration-300`}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
+            <div className="flex justify-center mb-12">
+              {Array.from({ length: Math.ceil(piercings.length / piercingsPerPage) }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => paginate(i + 1)}
+                  className={`mx-1 px-4 py-2 rounded-full ${
+                    currentPage === i + 1
+                      ? 'bg-white text-[#9370DB]'
+                      : 'bg-[#8A5CD8] text-white hover:bg-[#7B4ECF]'
+                  } transition duration-300`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
         <div className="bg-white bg-opacity-10 backdrop-blur-md rounded-lg shadow-lg p-8">
           <h2 className="text-3xl font-bold text-white mb-6">Perforadora</h2>
