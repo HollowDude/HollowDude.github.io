@@ -1,28 +1,19 @@
 import Link from "next/link"
-import Image from 'next/image'
-import { FaWhatsapp } from 'react-icons/fa'
+import { FaWhatsapp, FaArrowRight } from 'react-icons/fa'
 import { GiPiercedHeart, GiPencil } from 'react-icons/gi'
 
 export default function Welcome() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-700 to-purple-500">
-      {/* Contenido */}
       <div className="relative z-10">
         {/* Header */}
         <header className="p-2">
-          <div className="max-w-7xl mx-auto flex justify-between items-center">
-            <Image
-              src='/Vinilos.png'
-              alt="Logo del Negocio" 
-              width={80}
-              height={40}
-              className="h-10 w-auto"
-            />
+          <div className="max-w-7xl mx-auto flex justify-end items-center">
             <a 
               href="https://chat.whatsapp.com/your-group-invite-link" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-white hover:text-purple-200 transition duration-300 flex items-center"
+              className="inline-flex items-center bg-green-500 text-white font-bold py-2 px-4 rounded-full hover:bg-green-600 transition duration-300"
             >
               <FaWhatsapp className="mr-2" />
               Unirse al grupo de WhatsApp
@@ -35,7 +26,7 @@ export default function Welcome() {
           <div className="flex flex-col md:flex-row space-y-8 md:space-y-0 md:space-x-8">
             <Link
               href="/piercings"
-              className="flex-1 bg-white bg-opacity-10 backdrop-blur-md rounded-lg p-8 text-white hover:bg-opacity-20 transition duration-300 flex flex-col justify-between min-h-[400px]"
+              className="flex-1 bg-white bg-opacity-10 backdrop-blur-md rounded-lg p-8 text-white hover:bg-opacity-20 transition duration-300 flex flex-col justify-between min-h-[400px] relative group"
             >
               <div>
                 <div className="flex items-center mb-4">
@@ -46,14 +37,12 @@ export default function Welcome() {
                   Explora nuestra amplia selección de piercings de alta calidad y encuentra el que mejor se adapte a tu estilo.
                 </p>
               </div>
-              <span className="inline-block bg-purple-600 text-white font-bold py-2 px-4 rounded-full hover:bg-purple-700 transition duration-300 self-start">
-                Visitar
-              </span>
+              <FaArrowRight className="absolute bottom-4 right-4 text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </Link>
 
             <Link
               href="/tattoos"
-              className="flex-1 bg-white bg-opacity-10 backdrop-blur-md rounded-lg p-8 text-white hover:bg-opacity-20 transition duration-300 flex flex-col justify-between min-h-[400px]"
+              className="flex-1 bg-white bg-opacity-10 backdrop-blur-md rounded-lg p-8 text-white hover:bg-opacity-20 transition duration-300 flex flex-col justify-between min-h-[400px] relative group"
             >
               <div>
                 <div className="flex items-center mb-4">
@@ -64,9 +53,7 @@ export default function Welcome() {
                   Descubre nuestros diseños exclusivos y deja que nuestros artistas plasmen tu visión en tu piel.
                 </p>
               </div>
-              <span className="inline-block bg-purple-600 text-white font-bold py-2 px-4 rounded-full hover:bg-purple-700 transition duration-300 self-start">
-                Visitar
-              </span>
+              <FaArrowRight className="absolute bottom-4 right-4 text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </Link>
           </div>
         </main>

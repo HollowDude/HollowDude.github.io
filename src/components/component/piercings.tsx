@@ -1,52 +1,68 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FaWhatsapp } from 'react-icons/fa';
+import { FaWhatsapp, FaArrowLeft } from 'react-icons/fa';
 
-// Datos de ejemplo para los piercings
-const piercings = [
-  {
-    id: 1,
-    name: "Helix",
-    description: "Perforación en el borde superior de la oreja.",
-    price: 40,
-    image: "/placeholder.svg?height=300&width=300"
-  },
-  {
-    id: 2,
-    name: "Septum",
-    description: "Perforación en el tabique nasal.",
-    price: 50,
-    image: "/placeholder.svg?height=300&width=300"
-  },
-  {
-    id: 3,
-    name: "Labret",
-    description: "Perforación debajo del labio inferior.",
-    price: 45,
-    image: "/placeholder.svg?height=300&width=300"
-  },
-  {
-    id: 4,
-    name: "Industrial",
-    description: "Perforación que conecta dos puntos en la oreja.",
-    price: 60,
-    image: "/placeholder.svg?height=300&width=300"
-  },
-  {
-    id: 5,
-    name: "Tragus",
-    description: "Perforación en la pequeña porción de cartílago frente al canal auditivo.",
-    price: 55,
-    image: "/placeholder.svg?height=300&width=300"
-  },
-  // Agrega más piercings aquí para simular paginación
-];
+interface Piercing {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+}
 
 const PiercingPortfolio = () => {
+  const [piercings, setPiercings] = useState<Piercing[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const piercingsPerPage = 5;
+
+  useEffect(() => {
+    const fetchPiercings = async () => {
+      try {
+        // Obtener el token de acceso
+        const tokenResponse = await fetch('https://vinilos-backend-2cwk.onrender.com/api/token/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: "hollow",
+            password: "2502"
+          }),
+        });
+
+        if (!tokenResponse.ok) {
+          throw new Error('Failed to obtain access token');
+        }
+
+        const { access } = await tokenResponse.json();
+
+        // Obtener los datos de los piercings
+        const piercingsResponse = await fetch('https://vinilos-backend-2cwk.onrender.com/api/piercs/piercings', {
+          headers: {
+            'Authorization': `Bearer ${access}`,
+          },
+        });
+
+        if (!piercingsResponse.ok) {
+          throw new Error('Failed to fetch piercings data');
+        }
+
+        const piercingsData = await piercingsResponse.json();
+        setPiercings(piercingsData);
+        setLoading(false);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        setLoading(false);
+      }
+    };
+
+    fetchPiercings();
+  }, []);
+
   const indexOfLastPiercing = currentPage * piercingsPerPage;
   const indexOfFirstPiercing = indexOfLastPiercing - piercingsPerPage;
   const currentPiercings = piercings.slice(indexOfFirstPiercing, indexOfLastPiercing);
@@ -60,14 +76,26 @@ const PiercingPortfolio = () => {
 
   const scheduleAppointmentLink = "https://wa.me/+5358622909?text=Hola,%20me%20gustaría%20agendar%20una%20cita%20para%20un%20piercing.";
 
+  if (loading) {
+    return <div className="min-h-screen bg-gradient-to-br from-[#9370DB] via-[#8A5CD8] to-[#663399] flex items-center justify-center">
+      <p className="text-white text-2xl">Cargando piercings...</p>
+    </div>;
+  }
+
+  if (error) {
+    return <div className="min-h-screen bg-gradient-to-br from-[#9370DB] via-[#8A5CD8] to-[#663399] flex items-center justify-center">
+      <p className="text-white text-2xl">Error: {error}</p>
+    </div>;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#9370DB] via-[#8A5CD8] to-[#663399]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-4xl font-bold text-center text-white mb-6">Catálogo de Piercings</h1>
-        <div className="flex justify-center mb-8">
-          <Link href="/" className="bg-white text-[#9370DB] font-bold py-3 px-8 rounded-full hover:bg-opacity-90 transition duration-300">
-            Inicio
+        <div className="flex items-center justify-center mb-6">
+          <Link href="/" className="mr-4 text-white hover:text-purple-200 transition-all duration-300 transform hover:-translate-x-1">
+            <FaArrowLeft className="text-2xl" />
           </Link>
+          <h1 className="text-4xl font-bold text-center text-white">Catálogo de Piercings</h1>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
@@ -82,7 +110,7 @@ const PiercingPortfolio = () => {
                   href={getWhatsAppLink(piercing.name, piercing.price)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full text-center bg-[#9370DB] text-white font-bold py-2 px-4 rounded-full hover:bg-[#8A5CD8] transition duration-300 transform hover:scale-105"
+                  className="block w-full text-center bg-purple-500 text-white font-bold py-2 px-4 rounded-full hover:bg-purple-600 transition duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
                 >
                   Comprar
                 </a>
