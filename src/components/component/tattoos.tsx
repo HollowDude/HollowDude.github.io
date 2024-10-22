@@ -39,7 +39,7 @@ const TattooPortfolio = () => {
           accessToken = tokens.access;
           refreshToken = tokens.refresh;
         }
-        // @ts-ignore
+        // @ts-expect-error
         const tattoosData = await fetchTattoosData(accessToken)
         setTattoos(tattoosData);
       } catch (err) {
