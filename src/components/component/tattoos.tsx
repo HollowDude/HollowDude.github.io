@@ -39,7 +39,7 @@ const TattooPortfolio = () => {
           accessToken = tokens.access;
           refreshToken = tokens.refresh;
         }
-        // @ts-expect-error
+        // @ts-expect-error: Es porque aun no e solucionado eso y me pesa
         const tattoosData = await fetchTattoosData(accessToken)
         setTattoos(tattoosData);
       } catch (err) {
