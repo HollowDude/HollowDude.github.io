@@ -58,11 +58,13 @@ const TattooPortfolio = () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         username: USERNAME,
         password: PASSWORD
       }),
+      credentials: 'include',
     });
 
     if (!tokenResponse.ok) {
@@ -84,6 +86,7 @@ const TattooPortfolio = () => {
       body: JSON.stringify({
         refresh: refreshToken
       }),
+      credentials: 'include',
     });
 
     if (!refreshResponse.ok) {
@@ -100,6 +103,7 @@ const TattooPortfolio = () => {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
       },
+      credentials: 'include',
     });
 
     if (tattoosResponse.status === 401) {
