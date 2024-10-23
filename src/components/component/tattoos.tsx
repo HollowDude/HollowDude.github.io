@@ -55,7 +55,7 @@ const TattooPortfolio = () => {
 
   const getNewTokens = async () => {
     const tokenResponse = await fetch(`${API_BASE_URL}/api/token/`, {
-      method: 'POST',
+      method: 'POST', 'OPTIONS',
       headers: {
         'Content-Type': 'application/json',
       },
