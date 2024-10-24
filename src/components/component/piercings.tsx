@@ -14,6 +14,10 @@ interface Piercing {
 
 const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com';
 
+// En un entorno real, estas credenciales deberían estar en un .env
+const USERNAME = process.env.USERNAME;
+const PASSWORD = process.env.PASSWORD;
+
 const PiercingPortfolio = () => {
   const [piercings, setPiercings] = useState<Piercing[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -27,44 +31,20 @@ const PiercingPortfolio = () => {
         setLoading(true);
         setError(null);
 
-        console.log('Iniciando solicitud de token...');
-        const tokenResponse = await fetch(`${API_BASE_URL}/api/token/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            username: "hollow",
-            password: "2502"
-          }),
-        });
+        let accessToken = localStorage.getItem('accessToken');
+        let refreshToken = localStorage.getItem('refreshToken');
 
-        console.log('Respuesta de token recibida:', tokenResponse.status);
-        if (!tokenResponse.ok) {
-          throw new Error(`Failed to obtain access token. Status: ${tokenResponse.status}`);
+        if (!accessToken || !refreshToken) {
+          const tokens = await getNewTokens();
+          accessToken = tokens.access;
+          refreshToken = tokens.refresh;
         }
 
-        const { access } = await tokenResponse.json();
-        console.log('Token obtenido exitosamente');
-
-        console.log('Iniciando solicitud de piercings...');
-        const piercingsResponse = await fetch(`${API_BASE_URL}/api/piercs/piercings`, {
-          headers: {
-            'Authorization': `Bearer ${access}`,
-          },
-        });
-
-        console.log('Respuesta de piercings recibida:', piercingsResponse.status);
-        if (!piercingsResponse.ok) {
-          throw new Error(`Failed to fetch piercings data. Status: ${piercingsResponse.status}`);
-        }
-
-        const piercingsData = await piercingsResponse.json();
-        console.log('Datos de piercings obtenidos:', piercingsData.length);
+        const piercingsData = await fetchPiercingsData(accessToken);
         setPiercings(piercingsData);
       } catch (err) {
         console.error('Error detallado:', err);
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        setError('Error');
       } finally {
         setLoading(false);
       }
@@ -72,6 +52,72 @@ const PiercingPortfolio = () => {
 
     fetchPiercings();
   }, []);
+
+  const getNewTokens = async () => {
+    const tokenResponse = await fetch(`${API_BASE_URL}/api/token/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: USERNAME,
+        password: PASSWORD
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      throw new Error(`Failed to obtain access token. Status: ${tokenResponse.status}`);
+    }
+
+    const tokens = await tokenResponse.json();
+    localStorage.setItem('accessToken', tokens.access);
+    localStorage.setItem('refreshToken', tokens.refresh);
+    return tokens;
+  };
+
+  const refreshAccessToken = async (refreshToken: string) => {
+    const refreshResponse = await fetch(`${API_BASE_URL}/api/token/refresh/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        refresh: refreshToken
+      }),
+    });
+
+    if (!refreshResponse.ok) {
+      throw new Error(`Failed to refresh token. Status: ${refreshResponse.status}`);
+    }
+
+    const newTokens = await refreshResponse.json();
+    localStorage.setItem('accessToken', newTokens.access);
+    return newTokens.access;
+  };
+
+  const fetchPiercingsData = async (accessToken: string): Promise<Piercing[]> => {
+    const piercingsResponse = await fetch(`${API_BASE_URL}/api/piercs/piercings`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+
+    if (piercingsResponse.status === 401) {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (refreshToken) {
+        const newAccessToken = await refreshAccessToken(refreshToken);
+        return fetchPiercingsData(newAccessToken);
+      } else {
+        throw new Error('Refresh token not found');
+      }
+    }
+
+    if (!piercingsResponse.ok) {
+      throw new Error(`Failed to fetch piercings data. Status: ${piercingsResponse.status}`);
+    }
+
+    return piercingsResponse.json();
+  };
 
   const indexOfLastPiercing = currentPage * piercingsPerPage;
   const indexOfFirstPiercing = indexOfLastPiercing - piercingsPerPage;
@@ -87,19 +133,23 @@ const PiercingPortfolio = () => {
   const scheduleAppointmentLink = "https://wa.me/+5358622909?text=Hola,%20me%20gustaría%20agendar%20una%20cita%20para%20un%20piercing.";
 
   if (loading) {
-    return <div className="min-h-screen bg-gradient-to-br from-[#9370DB] via-[#8A5CD8] to-[#663399] flex items-center justify-center">
-      <p className="text-white text-2xl">Cargando piercings...</p>
-    </div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#9370DB] via-[#8A5CD8] to-[#663399] flex flex-col items-center justify-center">
+        <div className="w-16 h-16 border-4 border-white border-t-[#9370DB] rounded-full animate-spin mb-4"></div>
+        <p className="text-white text-2xl">Cargando</p>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="min-h-screen bg-gradient-to-br from-[#9370DB] via-[#8A5CD8] to-[#663399] flex items-center justify-center">
-      <div className="text-white text-center">
-        <p className="text-2xl mb-4">Error: {error}</p>
-        <p className="text-lg">Por favor, intenta recargar la página. Si el problema persiste, contacta al administrador.</p>
-        <p className="text-sm mt-4">Detalles técnicos: Revisa la consola del navegador para más información.</p>
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#9370DB] via-[#8A5CD8] to-[#663399] flex items-center justify-center">
+        <div className="text-white text-center">
+          <p className="text-2xl mb-4">Error</p>
+          <p className="text-lg">Contacte con el administrador.</p>
+        </div>
       </div>
-    </div>;
+    );
   }
 
   return (
