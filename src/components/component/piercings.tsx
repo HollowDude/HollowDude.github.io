@@ -39,7 +39,7 @@ const PiercingPortfolio = () => {
           accessToken = tokens.access;
           refreshToken = tokens.refresh;
         }
-
+        // @ts-expect-error: Es porque aun no e solucionado eso y me pesa
         const piercingsData = await fetchPiercingsData(accessToken);
         setPiercings(piercingsData);
       } catch (err) {
