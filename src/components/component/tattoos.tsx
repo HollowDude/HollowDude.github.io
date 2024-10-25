@@ -37,7 +37,8 @@ const TattooPortfolio = () => {
         console.log("Ya saco el acces:")
         console.log(accessToken)
 
-        if (!accessToken || !refreshToken) {
+        if (!accessToken) {
+          console.log("Va a hacer fetch de token")
           await getNewTokens();
           accessToken = Cookies.get('_access');
         }
@@ -73,8 +74,10 @@ const TattooPortfolio = () => {
     });
 
     if (!tokenResponse.ok) {
+      console.log("Dio error obteniendo")
       throw new Error(`Failed to obtain access token. Status: ${tokenResponse.status}`);
     }
+    console.log("Obtuvo")
 
     // Los tokens se establecerán automáticamente como cookies por el backend
   };
