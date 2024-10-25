@@ -35,7 +35,7 @@ const TattooPortfolio = () => {
         let accessToken = Cookies.get('_access');
         //const refreshToken = Cookies.get('_refresh');
         console.log("Ya saco el acces:")
-        console.log(accessToken)
+        console.log(accessToken.value)
 
         if (!accessToken) {
           console.log("Va a hacer fetch de token")
