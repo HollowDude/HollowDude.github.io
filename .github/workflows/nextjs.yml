@@ -34,8 +34,8 @@ jobs:
       - name: Detect package manager
         id: detect-package-manager
         run: |
-          echo "NEXT_PUBLIC_USERNAME=${{ vars.NEXT_PUBLIC_USERNAME }}" >> $GITHUB_ENV
-          echo "NEXT_PUBLIC_PASSWORD=${{ vars.NEXT_PUBLIC_PASSWORD }}" >> $GITHUB_ENV
+          echo "USERNAME=${{ vars.USERNAME }}" >> $GITHUB_ENV
+          echo "PASSWORD=${{ vars.PASSWORD }}" >> $GITHUB_ENV
           if [ -f "${{ github.workspace }}/yarn.lock" ]; then
             echo "manager=yarn" >> $GITHUB_OUTPUT
             echo "command=install" >> $GITHUB_OUTPUT
