@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FaWhatsapp, FaArrowLeft } from 'react-icons/fa';
+import Cookies from 'js-cookie';
 
 interface Piercing {
   id: number;
@@ -31,20 +32,23 @@ const PiercingPortfolio = () => {
         setLoading(true);
         setError(null);
 
-        let accessToken = localStorage.getItem('accessToken');
-        let refreshToken = localStorage.getItem('refreshToken');
+        let accessToken = Cookies.get('_auth');
+        let refreshToken = Cookies.get('_refresh');
 
         if (!accessToken || !refreshToken) {
-          const tokens = await getNewTokens();
-          accessToken = tokens.access;
-          refreshToken = tokens.refresh;
+          await getNewTokens();
+          accessToken = Cookies.get('_auth');
         }
-        // @ts-expect-error: Es porque aun no e solucionado eso y me pesa
-        const piercingsData = await fetchPiercingsData(accessToken);
-        setPiercings(piercingsData);
+
+        if (accessToken) {
+          const piercingsData = await fetchPiercingsData(accessToken);
+          setPiercings(piercingsData);
+        } else {
+          throw new Error('No se pudo obtener el token de acceso');
+        }
       } catch (err) {
         console.error('Error detallado:', err);
-        setError('Error');
+        setError('Error al cargar los piercings');
       } finally {
         setLoading(false);
       }
@@ -54,7 +58,7 @@ const PiercingPortfolio = () => {
   }, []);
 
   const getNewTokens = async () => {
-    const tokenResponse = await fetch(`${API_BASE_URL}/api/token/`, {
+    const tokenResponse = await fetch(`${API_BASE_URL}/api/auth/login/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -63,36 +67,27 @@ const PiercingPortfolio = () => {
         username: USERNAME,
         password: PASSWORD
       }),
+      credentials: 'include',
     });
 
     if (!tokenResponse.ok) {
       throw new Error(`Failed to obtain access token. Status: ${tokenResponse.status}`);
     }
 
-    const tokens = await tokenResponse.json();
-    localStorage.setItem('accessToken', tokens.access);
-    localStorage.setItem('refreshToken', tokens.refresh);
-    return tokens;
+    // Los tokens se establecerán automáticamente como cookies por el backend
   };
 
-  const refreshAccessToken = async (refreshToken: string) => {
-    const refreshResponse = await fetch(`${API_BASE_URL}/api/token/refresh/`, {
+  const refreshAccessToken = async () => {
+    const refreshResponse = await fetch(`${API_BASE_URL}/api/auth/token/refresh/`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        refresh: refreshToken
-      }),
+      credentials: 'include',
     });
 
     if (!refreshResponse.ok) {
       throw new Error(`Failed to refresh token. Status: ${refreshResponse.status}`);
     }
 
-    const newTokens = await refreshResponse.json();
-    localStorage.setItem('accessToken', newTokens.access);
-    return newTokens.access;
+    // El nuevo token de acceso se establecerá automáticamente como cookie por el backend
   };
 
   const fetchPiercingsData = async (accessToken: string): Promise<Piercing[]> => {
@@ -100,15 +95,16 @@ const PiercingPortfolio = () => {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
       },
+      credentials: 'include',
     });
 
     if (piercingsResponse.status === 401) {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (refreshToken) {
-        const newAccessToken = await refreshAccessToken(refreshToken);
+      await refreshAccessToken();
+      const newAccessToken = Cookies.get('_auth');
+      if (newAccessToken) {
         return fetchPiercingsData(newAccessToken);
       } else {
-        throw new Error('Refresh token not found');
+        throw new Error('No se pudo refrescar el token de acceso');
       }
     }
 
@@ -146,7 +142,7 @@ const PiercingPortfolio = () => {
       <div className="min-h-screen bg-gradient-to-br from-[#9370DB] via-[#8A5CD8] to-[#663399] flex items-center justify-center">
         <div className="text-white text-center">
           <p className="text-2xl mb-4">Error</p>
-          <p className="text-lg">Contacte con el administrador.</p>
+          <p className="text-lg">{error}</p>
         </div>
       </div>
     );

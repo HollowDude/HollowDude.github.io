@@ -1,0 +1,83 @@
+.container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  transition: transform 0.3s ease;
+}
+
+.section:hover {
+  transform: scale(1.05);
+}
+
+.piercingsSection {
+  background-color: #f3e5f5;
+}
+
+.tattoosSection {
+  background-color: #e0e0e0;
+}
+
+.section h2 {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.section p {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  max-width: 80%;
+}
+
+.piercingsSection h2,
+.piercingsSection p {
+  color: #4a148c;
+}
+
+.tattoosSection h2,
+.tattoosSection p {
+  color: #424242;
+}
+
+.button {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.piercingsButton {
+  background-color: #6a1b9a;
+  color: white;
+}
+
+.piercingsButton:hover {
+  background-color: #4a148c;
+}
+
+.tattoosButton {
+  background-color: #757575;
+  color: white;
+}
+
+.tattoosButton:hover {
+  background-color: #424242;
+}
+
+@media (max-width: 768px) {
+  .container {
+    grid-template-columns: 1fr;
+  }
+}
