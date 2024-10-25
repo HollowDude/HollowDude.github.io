@@ -16,8 +16,8 @@ interface Piercing {
 const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com';
 
 // En un entorno real, estas credenciales deberían estar en un .env
-const USERNAME = process.env.USERNAME;
-const PASSWORD = process.env.PASSWORD;
+const USERNAME = process.env.NEXT_PUBLIC_USERNAME;
+const PASSWORD = process.env.NEXT_PUBLIC_PASSWORD;
 
 const PiercingPortfolio = () => {
   const [piercings, setPiercings] = useState<Piercing[]>([]);
@@ -32,15 +32,19 @@ const PiercingPortfolio = () => {
         setLoading(true);
         setError(null);
 
-        let accessToken = Cookies.get('_auth');
+        let accessToken = Cookies.get('_access');
         const refreshToken = Cookies.get('_refresh');
+        console.log("Access token inicial:", accessToken);
 
         if (!accessToken || !refreshToken) {
+          console.log("No hay tokens, obteniendo nuevos...");
           await getNewTokens();
-          accessToken = Cookies.get('_auth');
+          accessToken = Cookies.get('_access');
+          console.log("Nuevo access token:", accessToken);
         }
 
         if (accessToken) {
+          console.log("Intentando obtener datos de piercings...");
           const piercingsData = await fetchPiercingsData(accessToken);
           setPiercings(piercingsData);
         } else {
@@ -58,61 +62,97 @@ const PiercingPortfolio = () => {
   }, []);
 
   const getNewTokens = async () => {
-    const tokenResponse = await fetch(`${API_BASE_URL}/api/auth/login/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: USERNAME,
-        password: PASSWORD
-      }),
-      credentials: 'include',
-    });
+    try {
+      const tokenResponse = await fetch(`${API_BASE_URL}/api/auth/login/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: USERNAME,
+          password: PASSWORD
+        }),
+        credentials: 'include',
+      });
 
-    if (!tokenResponse.ok) {
-      throw new Error(`Failed to obtain access token. Status: ${tokenResponse.status}`);
+      if (!tokenResponse.ok) {
+        throw new Error(`Failed to obtain access token. Status: ${tokenResponse.status}`);
+      }
+
+      const data = await tokenResponse.json();
+      console.log("Respuesta de login:", data);
+
+      // Establecer manualmente las cookies si el backend no lo hace
+      if (data.access) Cookies.set('_access', data.access);
+      if (data.refresh) Cookies.set('_refresh', data.refresh);
+
+      console.log("Tokens obtenidos y guardados");
+    } catch (error) {
+      console.error("Error al obtener tokens:", error);
+      throw error;
     }
-
-    // Los tokens se establecerán automáticamente como cookies por el backend
   };
 
   const refreshAccessToken = async () => {
-    const refreshResponse = await fetch(`${API_BASE_URL}/api/auth/token/refresh/`, {
-      method: 'POST',
-      credentials: 'include',
-    });
+    try {
+      const refreshToken = Cookies.get('_refresh');
+      const refreshResponse = await fetch(`${API_BASE_URL}/api/auth/token/refresh/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh: refreshToken }),
+        credentials: 'include',
+      });
 
-    if (!refreshResponse.ok) {
-      throw new Error(`Failed to refresh token. Status: ${refreshResponse.status}`);
+      if (!refreshResponse.ok) {
+        throw new Error(`Failed to refresh token. Status: ${refreshResponse.status}`);
+      }
+
+      const data = await refreshResponse.json();
+      if (data.access) {
+        Cookies.set('_access', data.access);
+        console.log("Token de acceso refrescado");
+      }
+    } catch (error) {
+      console.error("Error al refrescar el token:", error);
+      throw error;
     }
-
-    // El nuevo token de acceso se establecerá automáticamente como cookie por el backend
   };
 
   const fetchPiercingsData = async (accessToken: string): Promise<Piercing[]> => {
-    const piercingsResponse = await fetch(`${API_BASE_URL}/api/piercs/piercings`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-      credentials: 'include',
-    });
+    try {
+      const piercingsResponse = await fetch(`${API_BASE_URL}/api/piercs/piercings/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
 
-    if (piercingsResponse.status === 401) {
-      await refreshAccessToken();
-      const newAccessToken = Cookies.get('_auth');
-      if (newAccessToken) {
-        return fetchPiercingsData(newAccessToken);
-      } else {
-        throw new Error('No se pudo refrescar el token de acceso');
+      if (piercingsResponse.status === 401) {
+        console.log("Token expirado, intentando refrescar...");
+        await refreshAccessToken();
+        const newAccessToken = Cookies.get('_access');
+        if (newAccessToken) {
+          return fetchPiercingsData(newAccessToken);
+        } else {
+          throw new Error('No se pudo refrescar el token de acceso');
+        }
       }
-    }
 
-    if (!piercingsResponse.ok) {
-      throw new Error(`Failed to fetch piercings data. Status: ${piercingsResponse.status}`);
-    }
+      if (!piercingsResponse.ok) {
+        throw new Error(`Failed to fetch piercings data. Status: ${piercingsResponse.status}`);
+      }
 
-    return piercingsResponse.json();
+      const data = await piercingsResponse.json();
+      console.log("Datos de piercings obtenidos:", data);
+      return data;
+    } catch (error) {
+      console.error("Error al obtener datos de piercings:", error);
+      throw error;
+    }
   };
 
   const indexOfLastPiercing = currentPage * piercingsPerPage;
