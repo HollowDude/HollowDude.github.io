@@ -16,8 +16,8 @@ interface Tattoo {
 const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com';
 
 // En un entorno real, estas credenciales deberían estar en un .env
-const USERNAME = 'hollow';
-const PASSWORD = 2502;
+const USERNAME = process.env.USERNAME;
+const PASSWORD = process.env.PASSWORD;
 
 const TattooPortfolio = () => {
   const [tattoos, setTattoos] = useState<Tattoo[]>([]);
@@ -29,8 +29,6 @@ const TattooPortfolio = () => {
   useEffect(() => {
     const fetchTattoos = async () => {
       try {
-        console.log(USERNAME);
-        console.log(PASSWORD);
         setLoading(true);
         setError(null);
 
