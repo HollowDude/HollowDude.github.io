@@ -32,12 +32,12 @@ const TattooPortfolio = () => {
         setLoading(true);
         setError(null);
 
-        let accessToken = Cookies.get('_access');
-        const refreshToken = Cookies.get('_refresh');
+        let accessToken = Cookies.get('access');
+        const refreshToken = Cookies.get('refresh');
 
         if (!accessToken || !refreshToken) {
           await getNewTokens();
-          accessToken = Cookies.get('_access');
+          accessToken = Cookies.get('access');
         }
 
         if (accessToken) {
@@ -100,7 +100,7 @@ const TattooPortfolio = () => {
 
     if (tattoosResponse.status === 401) {
       await refreshAccessToken();
-      const newAccessToken = Cookies.get('_access');
+      const newAccessToken = Cookies.get('access');
       if (newAccessToken) {
         return fetchTattoosData(newAccessToken);
       } else {
