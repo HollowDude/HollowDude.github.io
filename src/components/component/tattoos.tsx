@@ -32,12 +32,12 @@ const TattooPortfolio = () => {
         setLoading(true);
         setError(null);
 
-        let accessToken = Cookies.get('_refresh');
-        //const refreshToken = Cookies.get('_refresh');
+        let accessToken = Cookies.get('_access');
+        const refreshToken = Cookies.get('_refresh');
         console.log("Ya saco el acces:")
         console.log(accessToken)
 
-        if (!accessToken) {
+        if (!accessToken || !refreshToken) {
           console.log("Va a hacer fetch de token")
           await getNewTokens();
           accessToken = Cookies.get('_access');
