@@ -29,10 +29,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Set up variables for GitHub Pages
-        run: |
-            echo "USERNAME=${{ vars.USERNAME }}" >> $GITHUB_ENV
-            echo "PASSWORD=${{ vars.PASSWORD }}" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v4
       - name: Detect package manager
@@ -77,6 +73,10 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+      - name: Set up variables for GitHub Pages
+        run: |
+          echo "NEXT_PUBLIC_USERNAME=${{ vars.NEXT_PUBLIC_USERNAME }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_PASSWORD=${{ vars.NEXT_PUBLIC_PASSWORD }}" >> $GITHUB_ENV
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
       - name: Upload artifact
