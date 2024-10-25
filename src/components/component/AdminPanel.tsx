@@ -14,13 +14,13 @@ const AdminPanel = () => {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/logout/`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
 
       if (response.ok) {
-        Cookies.remove('_auth');
+        Cookies.remove('_access');
         Cookies.remove('_refresh');
         router.push('/login');
       } else {
@@ -61,7 +61,7 @@ const AdminPanel = () => {
           <li>
             <button
               onClick={handleLogout}
-              className="flex items-center space-x-2 w-full p-2 rounded hover:bg-purple-700"
+              className="flex items-center space-x-2 w-full p-2 rounded  hover:bg-purple-700"
             >
               <FaSignOutAlt />
               <span>Cerrar Sesión</span>
