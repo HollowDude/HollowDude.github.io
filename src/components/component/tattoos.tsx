@@ -34,19 +34,17 @@ const TattooPortfolio = () => {
 
         let accessToken = Cookies.get('_access');
         const refreshToken = Cookies.get('_refresh');
-        console.log("Ya saco el acces:")
-        console.log(accessToken)
+        console.log("Access token inicial:", accessToken);
 
         if (!accessToken || !refreshToken) {
-          console.log("Va a hacer fetch de token")
+          console.log("No hay tokens, obteniendo nuevos...");
           await getNewTokens();
           accessToken = Cookies.get('_access');
-          console.log("el acces es:")
-          console.log(accessToken)
+          console.log("Nuevo access token:", accessToken);
         }
 
         if (accessToken) {
-          console.log("Hay acces")
+          console.log("Intentando obtener datos de tatuajes...");
           const tattoosData = await fetchTattoosData(accessToken);
           setTattoos(tattoosData);
         } else {
@@ -64,62 +62,95 @@ const TattooPortfolio = () => {
   }, []);
 
   const getNewTokens = async () => {
-    const tokenResponse = await fetch(`${API_BASE_URL}/api/auth/login/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: USERNAME,
-        password: PASSWORD,
-      }),
-      credentials: 'include',
-    });
+    try {
+      const tokenResponse = await fetch(`${API_BASE_URL}/api/auth/login/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: USERNAME,
+          password: PASSWORD,
+        }),
+        credentials: 'include',
+      });
 
-    if (!tokenResponse.ok) {
-      throw new Error(`Failed to obtain access token. Status: ${tokenResponse.status}`);
+      if (!tokenResponse.ok) {
+        throw new Error(`Failed to obtain access token. Status: ${tokenResponse.status}`);
+      }
+
+      const data = await tokenResponse.json();
+      console.log("Respuesta de login:", data);
+
+      // Establecer manualmente las cookies si el backend no lo hace
+      if (data.access) Cookies.set('_access', data.access);
+      if (data.refresh) Cookies.set('_refresh', data.refresh);
+
+      console.log("Tokens obtenidos y guardados");
+    } catch (error) {
+      console.error("Error al obtener tokens:", error);
+      throw error;
     }
-    console.log("Obtuvo")
-
-    // Los tokens se establecerán automáticamente como cookies por el backend
   };
 
   const refreshAccessToken = async () => {
-    const refreshResponse = await fetch(`${API_BASE_URL}/api/auth/token/refresh/`, {
-      method: 'POST',
-      credentials: 'include',
-    });
+    try {
+      const refreshToken = Cookies.get('_refresh');
+      const refreshResponse = await fetch(`${API_BASE_URL}/api/auth/token/refresh/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh: refreshToken }),
+        credentials: 'include',
+      });
 
-    if (!refreshResponse.ok) {
-      throw new Error(`Failed to refresh token. Status: ${refreshResponse.status}`);
+      if (!refreshResponse.ok) {
+        throw new Error(`Failed to refresh token. Status: ${refreshResponse.status}`);
+      }
+
+      const data = await refreshResponse.json();
+      if (data.access) {
+        Cookies.set('_access', data.access);
+        console.log("Token de acceso refrescado");
+      }
+    } catch (error) {
+      console.error("Error al refrescar el token:", error);
+      throw error;
     }
-
-    // El nuevo token de acceso se establecerá automáticamente como cookie por el backend
   };
 
   const fetchTattoosData = async (accessToken: string): Promise<Tattoo[]> => {
-    const tattoosResponse = await fetch(`${API_BASE_URL}/api/tatts/tattoos`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-      credentials: 'include',
-    });
+    try {
+      const tattoosResponse = await fetch(`${API_BASE_URL}/api/tatts/tattoos`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        credentials: 'include',
+      });
 
-    if (tattoosResponse.status === 401) {
-      await refreshAccessToken();
-      const newAccessToken = Cookies.get('_access');
-      if (newAccessToken) {
-        return fetchTattoosData(newAccessToken);
-      } else {
-        throw new Error('No se pudo refrescar el token de acceso');
+      if (tattoosResponse.status === 401) {
+        console.log("Token expirado, intentando refrescar...");
+        await refreshAccessToken();
+        const newAccessToken = Cookies.get('_access');
+        if (newAccessToken) {
+          return fetchTattoosData(newAccessToken);
+        } else {
+          throw new Error('No se pudo refrescar el token de acceso');
+        }
       }
-    }
 
-    if (!tattoosResponse.ok) {
-      throw new Error(`Failed to fetch tattoos data. Status: ${tattoosResponse.status}`);
-    }
+      if (!tattoosResponse.ok) {
+        throw new Error(`Failed to fetch tattoos data. Status: ${tattoosResponse.status}`);
+      }
 
-    return tattoosResponse.json();
+      const data = await tattoosResponse.json();
+      console.log("Datos de tatuajes obtenidos:", data);
+      return data;
+    } catch (error) {
+      console.error("Error al obtener datos de tatuajes:", error);
+      throw error;
+    }
   };
 
   const indexOfLastTattoo = currentPage * tattoosPerPage;
