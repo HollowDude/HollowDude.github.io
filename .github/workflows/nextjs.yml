@@ -31,8 +31,8 @@ jobs:
     steps:
       - name: Set up variables for GitHub Pages
         run: |
-            echo "NEXT_PUBLIC_API_USERNAME=${{ vars.NEXT_PUBLIC_API_USERNAME }}" >> $GITHUB_ENV
-            echo "NEXT_PUBLIC_API_PASSWORD=${{ vars.NEXT_PUBLIC_API_PASSWORD }}" >> $GITHUB_ENV
+            echo "USERNAME=${{ vars.USERNAME }}" >> $GITHUB_ENV
+            echo "PASSWORD=${{ vars.PASSWORD }}" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v4
       - name: Detect package manager
