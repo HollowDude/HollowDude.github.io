@@ -32,7 +32,7 @@ const TattooPortfolio = () => {
         setLoading(true);
         setError(null);
 
-        let accessToken = Cookies.get('_access');
+        let accessToken = Cookies.get('_refresh');
         //const refreshToken = Cookies.get('_refresh');
         console.log("Ya saco el acces:")
         console.log(accessToken)
@@ -42,7 +42,7 @@ const TattooPortfolio = () => {
           await getNewTokens();
           accessToken = Cookies.get('_access');
           console.log("el acces es:")
-          console.log(accessToken.value)
+          console.log(accessToken)
         }
 
         if (accessToken) {
