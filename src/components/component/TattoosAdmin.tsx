@@ -124,9 +124,7 @@ const TattoosAdmin = () => {
     }
   };
 
-  const handleSave = async (tattoo: Tattoo)
-
- => {
+  const handleSave = async (tattoo: Tattoo) => {
     try {
       const accessToken = Cookies.get('_access');
       if (!accessToken) {
