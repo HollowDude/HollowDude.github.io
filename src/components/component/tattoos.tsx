@@ -16,8 +16,8 @@ interface Tattoo {
 const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com';
 
 // En un entorno real, estas credenciales deberían estar en un .env
-const USERNAME = process.env.NEXT_PUBLIC_USERNAME;
-const PASSWORD = process.env.NEXT_PUBLIC_PASSWORD;
+const USERNAME = process.env.USERNAME;
+const PASSWORD = process.env.PASSWORD;
 
 const TattooPortfolio = () => {
   const [tattoos, setTattoos] = useState<Tattoo[]>([]);
@@ -33,7 +33,7 @@ const TattooPortfolio = () => {
         setError(null);
 
         let accessToken = Cookies.get('_auth');
-        let refreshToken = Cookies.get('_refresh');
+        const refreshToken = Cookies.get('_refresh');
 
         if (!accessToken || !refreshToken) {
           await getNewTokens();
@@ -93,7 +93,7 @@ const TattooPortfolio = () => {
   const fetchTattoosData = async (accessToken: string): Promise<Tattoo[]> => {
     const tattoosResponse = await fetch(`${API_BASE_URL}/api/tatts/tattoos`, {
       headers: {
-        'Authorization': `Bearer ${_auth}`,
+        'Authorization': `Bearer ${accessToken}`,
       },
       credentials: 'include',
     });
