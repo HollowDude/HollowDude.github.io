@@ -19,9 +19,6 @@ const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com';
 const USERNAME = process.env.USERNAME;
 const PASSWORD = process.env.PASSWORD;
 
-console.log('El User:'USERNAME)
-console.log(PASSWORD)
-
 const TattooPortfolio = () => {
   const [tattoos, setTattoos] = useState<Tattoo[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,6 +29,8 @@ const TattooPortfolio = () => {
   useEffect(() => {
     const fetchTattoos = async () => {
       try {
+        console.log(USERNAME);
+        console.log(PASSWORD);
         setLoading(true);
         setError(null);
 
