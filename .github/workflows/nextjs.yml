@@ -29,13 +29,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Set up variables for GitHub Pages
+        run: |
+            echo "NEXT_PUBLIC_API_USERNAME=${{ vars.NEXT_PUBLIC_API_USERNAME }}" >> $GITHUB_ENV
+            echo "NEXT_PUBLIC_API_PASSWORD=${{ vars.NEXT_PUBLIC_API_PASSWORD }}" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v4
       - name: Detect package manager
         id: detect-package-manager
         run: |
-          echo "NEXT_PUBLIC_API_USERNAME=${{ vars.NEXT_PUBLIC_API_USERNAME }}" >> $GITHUB_ENV
-          echo "NEXT_PUBLIC_API_PASSWORD=${{ vars.NEXT_PUBLIC_API_PASSWORD }}" >> $GITHUB_ENV
           if [ -f "${{ github.workspace }}/yarn.lock" ]; then
             echo "manager=yarn" >> $GITHUB_OUTPUT
             echo "command=install" >> $GITHUB_OUTPUT
