@@ -33,7 +33,7 @@ const PiercingPortfolio = () => {
         setError(null);
 
         let accessToken = Cookies.get('_auth');
-        let refreshToken = Cookies.get('_refresh');
+        const refreshToken = Cookies.get('_refresh');
 
         if (!accessToken || !refreshToken) {
           await getNewTokens();
