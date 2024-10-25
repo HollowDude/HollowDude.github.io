@@ -41,9 +41,12 @@ const TattooPortfolio = () => {
           console.log("Va a hacer fetch de token")
           await getNewTokens();
           accessToken = Cookies.get('_access');
+          console.log("el acces es:")
+          console.log(accessToken)
         }
 
         if (accessToken) {
+          console.log("Hay acces")
           const tattoosData = await fetchTattoosData(accessToken);
           setTattoos(tattoosData);
         } else {
@@ -74,7 +77,6 @@ const TattooPortfolio = () => {
     });
 
     if (!tokenResponse.ok) {
-      console.log("Dio error obteniendo")
       throw new Error(`Failed to obtain access token. Status: ${tokenResponse.status}`);
     }
     console.log("Obtuvo")
