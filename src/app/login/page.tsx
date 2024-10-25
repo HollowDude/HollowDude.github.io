@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Cookies from 'js-cookie';
 
 const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com';
 
