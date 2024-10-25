@@ -30,19 +30,25 @@ const PiercingsAdmin = () => {
       setLoading(true);
       setError(null);
 
-      const accessToken = Cookies.get('_auth');
+      const accessToken = Cookies.get('_access');
       if (!accessToken) {
         throw new Error('No access token found');
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/piercs/piercings`, {
+      const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
         },
         credentials: 'include',
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          // Token expirado, intentar refrescar
+          await refreshToken();
+          return fetchPiercings();
+        }
         throw new Error('Failed to fetch piercings');
       }
 
@@ -56,6 +62,32 @@ const PiercingsAdmin = () => {
     }
   };
 
+  const refreshToken = async () => {
+    try {
+      const refreshToken = Cookies.get('_refresh');
+      const response = await fetch(`${API_BASE_URL}/api/auth/token/refresh/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh: refreshToken }),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to refresh token');
+      }
+
+      const data = await response.json();
+      if (data.access) {
+        Cookies.set('_access', data.access);
+      }
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      throw error;
+    }
+  };
+
   const handleEdit = (piercing: Piercing) => {
     setEditingPiercing(piercing);
   };
@@ -63,12 +95,12 @@ const PiercingsAdmin = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este piercing?')) {
       try {
-        const accessToken = Cookies.get('_auth');
+        const accessToken = Cookies.get('_access');
         if (!accessToken) {
           throw new Error('No access token found');
         }
 
-        const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/${id}/`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -77,6 +109,10 @@ const PiercingsAdmin = () => {
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            await refreshToken();
+            return handleDelete(id);
+          }
           throw new Error('Failed to delete piercing');
         }
 
@@ -90,12 +126,12 @@ const PiercingsAdmin = () => {
 
   const handleSave = async (piercing: Piercing) => {
     try {
-      const accessToken = Cookies.get('_auth');
+      const accessToken = Cookies.get('_access');
       if (!accessToken) {
         throw new Error('No access token found');
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/${piercing.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/${piercing.id}/`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -106,6 +142,10 @@ const PiercingsAdmin = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          await refreshToken();
+          return handleSave(piercing);
+        }
         throw new Error('Failed to update piercing');
       }
 
@@ -126,12 +166,12 @@ const PiercingsAdmin = () => {
     };
 
     try {
-      const accessToken = Cookies.get('_auth');
+      const accessToken = Cookies.get('_access');
       if (!accessToken) {
         throw new Error('No access token found');
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/piercs/piercings`, {
+      const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -142,6 +182,10 @@ const PiercingsAdmin = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          await refreshToken();
+          return handleAdd();
+        }
         throw new Error('Failed to add piercing');
       }
 
@@ -224,7 +268,7 @@ const PiercingsAdmin = () => {
               </div>
             ) : (
               <>
-                <img  src={piercing.image} alt={piercing.name} className="w-full h-48 object-cover rounded-t-lg" />
+                <img src={piercing.image} alt={piercing.name} className="w-full h-48 object-cover rounded-t-lg" />
                 <h3 className="text-xl font-bold text-white mt-2">{piercing.name}</h3>
                 <p className="text-purple-200">{piercing.description}</p>
                 <p className="text-white font-bold mt-2">Precio: ${piercing.price}</p>
