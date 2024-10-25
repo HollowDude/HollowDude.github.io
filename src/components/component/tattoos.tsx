@@ -35,7 +35,7 @@ const TattooPortfolio = () => {
         let accessToken = Cookies.get('access');
         const refreshToken = Cookies.get('refresh');
         console.log("Ya saco el acces:")
-        console.log(accesToken)
+        console.log(accessToken)
 
         if (!accessToken || !refreshToken) {
           await getNewTokens();
