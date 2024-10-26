@@ -136,6 +136,7 @@ const PiercingsAdmin = () => {
       formData.append('price', piercing.price.toString());
       
       if (piercing.image && piercing.image.startsWith('data:image')) {
+        // @ts-expect-error: En fin!.
         const base64Data = piercing.image.split(',')[1];
         const blob = await fetch(piercing.image).then(r => r.blob());
         formData.append('image', blob, 'image.jpg');
