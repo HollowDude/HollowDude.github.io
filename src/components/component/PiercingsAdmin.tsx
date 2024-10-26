@@ -290,6 +290,7 @@ const PiercingsAdmin = () => {
             ) : (
               <>
                 <img 
+                  // @ts-expect-error: La propiedad 'age' no está en la interfaz 'Person', pero es necesaria por razones X.
                   src={piercing.image instanceof File ? URL.createObjectURL(piercing.image) : piercing.image} 
                   alt={piercing.name} 
                   className="w-full h-48 object-cover rounded-t-lg" 
