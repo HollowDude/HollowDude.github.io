@@ -8,7 +8,7 @@ interface Tattoo {
   id: number;
   name: string;
   description: string;
-  image: string;
+  image: string | File;
   date: string;
 }
 
@@ -45,7 +45,6 @@ const TattoosAdmin = () => {
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Token expirado, intentar refrescar
           await refreshToken();
           return fetchTattoos();
         }
@@ -82,7 +81,7 @@ const TattoosAdmin = () => {
       if (data.access) {
         Cookies.set('_access', data.access);
       }
-    } catch (error) {
+    } catch  (error) {
       console.error('Error refreshing token:', error);
       throw error;
     }
@@ -131,13 +130,21 @@ const TattoosAdmin = () => {
         throw new Error('No access token found');
       }
 
+      const formData = new FormData();
+      formData.append('name', tattoo.name);
+      formData.append('description', tattoo.description);
+      formData.append('date', tattoo.date);
+      
+      if (tattoo.image instanceof File) {
+        formData.append('image', tattoo.image);
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/tatts/tattoos/${tattoo.id}/`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(tattoo),
+        body: formData,
         credentials: 'include',
       });
 
@@ -149,7 +156,8 @@ const TattoosAdmin = () => {
         throw new Error('Failed to update tattoo');
       }
 
-      setTattoos(tattoos.map(t => t.id === tattoo.id ? tattoo : t));
+      const updatedTattoo = await response.json();
+      setTattoos(tattoos.map(t => t.id === tattoo.id ? updatedTattoo : t));
       setEditingTattoo(null);
     } catch (err) {
       setError('Error al actualizar el tatuaje');
@@ -161,7 +169,7 @@ const TattoosAdmin = () => {
     const newTattoo: Omit<Tattoo, 'id'> = {
       name: 'Nuevo Tatuaje',
       description: 'Descripción del nuevo tatuaje',
-      image: '/placeholder.svg',
+      image: '',
       date: new Date().toISOString().split('T')[0],
     };
 
@@ -171,13 +179,17 @@ const TattoosAdmin = () => {
         throw new Error('No access token found');
       }
 
+      const formData = new FormData();
+      formData.append('name', newTattoo.name);
+      formData.append('description', newTattoo.description);
+      formData.append('date', newTattoo.date);
+
       const response = await fetch(`${API_BASE_URL}/api/tatts/tattoos/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newTattoo),
+        body: formData,
         credentials: 'include',
       });
 
@@ -195,6 +207,15 @@ const TattoosAdmin = () => {
     } catch (err) {
       setError('Error al añadir el tatuaje');
       console.error(err);
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0] && editingTattoo) {
+      setEditingTattoo({
+        ...editingTattoo,
+        image: e.target.files[0]
+      });
     }
   };
 
@@ -248,15 +269,14 @@ const TattoosAdmin = () => {
                   className="w-full p-2 rounded bg-purple-700 text-white"
                 />
                 <input
-                  type="text"
-                  value={editingTattoo.image}
-                  onChange={(e) => setEditingTattoo({...editingTattoo, image: e.target.value})}
-                  className="w-full p-2 rounded bg-purple-700 text-white"
-                />
-                <input
                   type="date"
                   value={editingTattoo.date}
                   onChange={(e) => setEditingTattoo({...editingTattoo, date: e.target.value})}
+                  className="w-full p-2 rounded bg-purple-700 text-white"
+                />
+                <input
+                  type="file"
+                  onChange={handleImageChange}
                   className="w-full p-2 rounded bg-purple-700 text-white"
                 />
                 <button
@@ -268,7 +288,11 @@ const TattoosAdmin = () => {
               </div>
             ) : (
               <>
-                <img src={tattoo.image} alt={tattoo.name} className="w-full h-48 object-cover rounded-t-lg" />
+                <img 
+                  src={tattoo.image instanceof File ? URL.createObjectURL(tattoo.image) : tattoo.image} 
+                  alt={tattoo.name} 
+                  className="w-full h-48 object-cover rounded-t-lg" 
+                />
                 <h3 className="text-xl font-bold text-white mt-2">{tattoo.name}</h3>
                 <p className="text-purple-200">{tattoo.description}</p>
                 <p className="text-white font-bold mt-2">Fecha: {new Date(tattoo.date).toLocaleDateString()}</p>
