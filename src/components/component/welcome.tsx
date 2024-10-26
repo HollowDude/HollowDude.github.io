@@ -10,7 +10,7 @@ export default function Welcome() {
         <header className="p-2">
           <div className="max-w-7xl mx-auto flex justify-end items-center">
             <a 
-              href="https://chat.whatsapp.com/your-group-invite-link" 
+              href="https://chat.whatsapp.com/BvBmDkSushy3MHSDgUtaNG" 
               target="_blank" 
               rel="noopener noreferrer"
               className="inline-flex items-center bg-green-500 text-white font-bold py-2 px-4 rounded-full hover:bg-green-600 transition duration-300"
@@ -34,7 +34,10 @@ export default function Welcome() {
                   <h2 className="text-3xl font-bold">Piercings</h2>
                 </div>
                 <p className="mb-4">
-                  Explora nuestra amplia selección de piercings de alta calidad y encuentra el que mejor se adapte a tu estilo.
+                  Explora nuestro catálogo de piercings y encuentra el que mejor se adapte a tu estilo.
+                </p>
+                <p className="mb-4">
+                  Conoce sobre nosotros y contáctanos!
                 </p>
               </div>
               <FaArrowRight className="absolute bottom-4 right-4 text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -50,7 +53,10 @@ export default function Welcome() {
                   <h2 className="text-3xl font-bold">Tatuajes</h2>
                 </div>
                 <p className="mb-4">
-                  Descubre nuestros diseños exclusivos y deja que nuestros artistas plasmen tu visión en tu piel.
+                  Descubre nuestros diseños exclusivos, mira nuestros trabajos y déjanos plasmar tu visión en tu piel.
+                </p>
+                <p className="mb-4">
+                  Conoce sobre nosotros y contáctanos!
                 </p>
               </div>
               <FaArrowRight className="absolute bottom-4 right-4 text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

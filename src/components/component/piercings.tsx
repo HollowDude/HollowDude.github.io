@@ -172,7 +172,7 @@ const PiercingPortfolio = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#9370DB] via-[#8A5CD8] to-[#663399] flex flex-col items-center justify-center">
         <div className="w-16 h-16 border-4 border-white border-t-[#9370DB] rounded-full animate-spin mb-4"></div>
-        <p className="text-white text-2xl">Cargando</p>
+        <p className="text-white text-2xl">Cargando...</p>
       </div>
     );
   }
@@ -181,7 +181,8 @@ const PiercingPortfolio = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#9370DB] via-[#8A5CD8] to-[#663399] flex items-center justify-center">
         <div className="text-white text-center">
-          <p className="text-2xl mb-4">Error</p>
+          <p className="text-2xl mb-4">Se ha producido un error :c</p>
+          <p className="text-2xl mb-4">Contacte con el Administrador</p>
           <p className="text-lg">{error}</p>
         </div>
       </div>

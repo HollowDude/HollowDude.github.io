@@ -167,7 +167,7 @@ const TattooPortfolio = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-700 to-purple-500 flex flex-col items-center justify-center">
         <div className="w-16 h-16 border-4 border-white border-t-purple-500 rounded-full animate-spin mb-4"></div>
-        <p className="text-white text-2xl">Cargando</p>
+        <p className="text-white text-2xl">Cargando...</p>
       </div>
     );
   }
@@ -176,7 +176,8 @@ const TattooPortfolio = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-700 to-purple-500 flex items-center justify-center">
         <div className="text-white text-center">
-          <p className="text-2xl mb-4">Error</p>
+          <p className="text-2xl mb-4">Se ha producido un error :c</p>
+          <p className="text-2xl mb-4">Contacta con el Administrador</p>
           <p className="text-lg">{error}</p>
         </div>
       </div>
@@ -237,7 +238,7 @@ const TattooPortfolio = () => {
                 className="inline-flex items-center bg-green-500 text-white font-bold py-2 px-4 rounded-full hover:bg-green-600 transition duration-300"
               >
                 <FaWhatsapp className="mr-2" />
-                Contáctame por WhatsApp
+                Agenda una cita YA!
               </a>
             </div>
           </div>
