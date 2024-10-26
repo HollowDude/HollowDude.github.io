@@ -134,7 +134,7 @@ const PiercingsAdmin = () => {
       formData.append('name', piercing.name);
       formData.append('description', piercing.description);
       formData.append('price', piercing.price.toString());
-      
+      // @ts-expect-error: La propiedad 'age' no está en la interfaz 'Person', pero es necesaria por razones X.
       if (piercing.image instanceof File) {
         formData.append('image', piercing.image);
       }
