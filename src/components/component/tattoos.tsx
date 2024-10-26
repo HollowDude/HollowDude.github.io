@@ -148,13 +148,10 @@ const TattooPortfolio = () => {
 
       const data = await tattoosResponse.json();
       console.log("Datos de tatuajes obtenidos:", data);
-      return data.map((tattoo: Tattoo) => ({
-        ...tattoo,
-        image: `data:image/jpeg;base64,${tattoo.image}`
-      }));
+      return data;
     } catch (error) {
       console.error("Error al obtener datos de tatuajes:", error);
-      throw error;
+           throw error;
     }
   };
 
