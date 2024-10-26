@@ -1,8 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { FaWhatsapp, FaArrowLeft } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSearch } from 'react-icons/fa';
 import Cookies from 'js-cookie';
 
 interface Piercing {
@@ -10,93 +9,62 @@ interface Piercing {
   name: string;
   description: string;
   price: number;
-  image?: string;  // Make image optional
+  image: string;
 }
 
 const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com';
 
-// En un entorno real, estas credenciales deberían estar en un .env
-const USERNAME = process.env.NEXT_PUBLIC_USERNAME;
-const PASSWORD = process.env.NEXT_PUBLIC_PASSWORD;
-
-const PiercingPortfolio = () => {
+const PiercingsAdmin = () => {
   const [piercings, setPiercings] = useState<Piercing[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const piercingsPerPage = 5;
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editingPiercing, setEditingPiercing] = useState<Piercing | null>(null);
 
   useEffect(() => {
-    const fetchPiercings = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        let accessToken = Cookies.get('_access');
-        const refreshToken = Cookies.get('_refresh');
-        console.log("Access token inicial:", accessToken);
-
-        if (!accessToken || !refreshToken) {
-          console.log("No hay tokens, obteniendo nuevos...");
-          await getNewTokens();
-          accessToken = Cookies.get('_access');
-          console.log("Nuevo access token:", accessToken);
-        }
-
-        if (accessToken) {
-          console.log("Intentando obtener datos de piercings...");
-          const piercingsData = await fetchPiercingsData(accessToken);
-          setPiercings(piercingsData);
-        } else {
-          throw new Error('No se pudo obtener el token de acceso');
-        }
-      } catch (err) {
-        console.error('Error detallado:', err);
-        setError('Error al cargar los piercings');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchPiercings();
   }, []);
 
-  const getNewTokens = async () => {
+  const fetchPiercings = async () => {
     try {
-      const tokenResponse = await fetch(`${API_BASE_URL}/api/auth/login/`, {
-        method: 'POST',
+      setLoading(true);
+      setError(null);
+
+      const accessToken = Cookies.get('_access');
+      if (!accessToken) {
+        throw new Error('No access token found');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/`, {
         headers: {
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          username: USERNAME,
-          password: PASSWORD,
-        }),
         credentials: 'include',
       });
 
-      if (!tokenResponse.ok) {
-        throw new Error(`Failed to obtain access token. Status: ${tokenResponse.status}`);
+      if (!response.ok) {
+        if (response.status === 401) {
+          await refreshToken();
+          return fetchPiercings();
+        }
+        throw new Error('Failed to fetch piercings');
       }
 
-      const data = await tokenResponse.json();
-      console.log("Respuesta de login:", data);
-
-      // Establecer manualmente las cookies si el backend no lo hace
-      if (data.access) Cookies.set('_access', data.access);
-      if (data.refresh) Cookies.set('_refresh', data.refresh);
-
-      console.log("Tokens obtenidos y guardados");
-    } catch (error) {
-      console.error("Error al obtener tokens:", error);
-      throw error;
+      const data = await response.json();
+      setPiercings(data);
+    } catch (err) {
+      setError('Error al cargar los piercings');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const refreshAccessToken = async () => {
+  const refreshToken = async () => {
     try {
       const refreshToken = Cookies.get('_refresh');
-      const refreshResponse = await fetch(`${API_BASE_URL}/api/auth/token/refresh/`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/token/refresh/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -105,152 +73,252 @@ const PiercingPortfolio = () => {
         credentials: 'include',
       });
 
-      if (!refreshResponse.ok) {
-        throw new Error(`Failed to refresh token. Status: ${refreshResponse.status}`);
+      if (!response.ok) {
+        throw new Error('Failed to refresh token');
       }
 
-      const data = await refreshResponse.json();
+      const data = await response.json();
       if (data.access) {
         Cookies.set('_access', data.access);
-        console.log("Token de acceso refrescado");
       }
     } catch (error) {
-      console.error("Error al refrescar el token:", error);
+      console.error('Error refreshing token:', error);
       throw error;
     }
   };
 
-  const fetchPiercingsData = async (accessToken: string): Promise<Piercing[]> => {
+  const handleEdit = (piercing: Piercing) => {
+    setEditingPiercing(piercing);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar este piercing?')) {
+      try {
+        const accessToken = Cookies.get('_access');
+        if (!accessToken) {
+          throw new Error('No access token found');
+        }
+
+        const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/${id}/`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            await refreshToken();
+            return handleDelete(id);
+          }
+          throw new Error('Failed to delete piercing');
+        }
+
+        setPiercings(piercings.filter(p => p.id !== id));
+      } catch (err) {
+        setError('Error al eliminar el piercing');
+        console.error(err);
+      }
+    }
+  };
+
+  const handleSave = async (piercing: Piercing) => {
     try {
-      const piercingsResponse = await fetch(`${API_BASE_URL}/api/piercs/piercings/`, {
-        method: 'GET',
+      const accessToken = Cookies.get('_access');
+      if (!accessToken) {
+        throw new Error('No access token found');
+      }
+
+      const formData = new FormData();
+      formData.append('name', piercing.name);
+      formData.append('description', piercing.description);
+      formData.append('price', piercing.price.toString());
+      // @ts-expect-error: La propiedad 'age' no está en la interfaz 'Person', pero es necesaria por razones X.
+      if (piercing.image instanceof File) {
+        formData.append('image', piercing.image);
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/${piercing.id}/`, {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
         },
+        body: formData,
         credentials: 'include',
       });
 
-      if (piercingsResponse.status === 401) {
-        console.log("Token expirado, intentando refrescar...");
-        await refreshAccessToken();
-        const newAccessToken = Cookies.get('_access');
-        if (newAccessToken) {
-          return fetchPiercingsData(newAccessToken);
-        } else {
-          throw new Error('No se pudo refrescar el token de acceso');
+      if (!response.ok) {
+        if (response.status === 401) {
+          await refreshToken();
+          return handleSave(piercing);
         }
+        throw new Error('Failed to update piercing');
       }
 
-      if (!piercingsResponse.ok) {
-        throw new Error(`Failed to fetch piercings data. Status: ${piercingsResponse.status}`);
-      }
-
-      const data = await piercingsResponse.json();
-      console.log("Datos de piercings obtenidos:", data);
-      return data.map((piercing: Piercing) => ({
-        ...piercing,
-        image: piercing.image 
-          ? (piercing.image.startsWith('data:image') ? piercing.image : `data:image/jpeg;base64,${piercing.image}`)
-          : '/placeholder.svg?height=300&width=300'
-      }));
-    } catch (error) {
-      console.error("Error al obtener datos de piercings:", error);
-      throw error;
+      const updatedPiercing = await response.json();
+      setPiercings(piercings.map(p => p.id === piercing.id ? updatedPiercing : p));
+      setEditingPiercing(null);
+    } catch (err) {
+      setError('Error al actualizar el piercing');
+      console.error(err);
     }
   };
 
-  const indexOfLastPiercing = currentPage * piercingsPerPage;
-  const indexOfFirstPiercing = indexOfLastPiercing - piercingsPerPage;
-  const currentPiercings = piercings.slice(indexOfFirstPiercing, indexOfLastPiercing);
+  const handleAdd = async () => {
+    const newPiercing: Omit<Piercing, 'id'> = {
+      name: 'Nuevo Piercing',
+      description: 'Descripción del nuevo piercing',
+      price: 0,
+      image: '',
+    };
 
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+    try {
+      const accessToken = Cookies.get('_access');
+      if (!accessToken) {
+        throw new Error('No access token found');
+      }
 
-  const whatsappLink = "https://wa.me/+5358228400?text=Quiero%20agendar%20una%20cita";
+      const formData = new FormData();
+      formData.append('name', newPiercing.name);
+      formData.append('description', newPiercing.description);
+      formData.append('price', newPiercing.price.toString());
+
+      const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          await refreshToken();
+          return handleAdd();
+        }
+        throw new Error('Failed to add piercing');
+      }
+
+      const addedPiercing = await response.json();
+      setPiercings([...piercings, addedPiercing]);
+      setEditingPiercing(addedPiercing);
+    } catch (err) {
+      setError('Error al añadir el piercing');
+      console.error(err);
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0] && editingPiercing) {
+      setEditingPiercing({
+        ...editingPiercing,
+        // @ts-expect-error: La propiedad 'age' no está en la interfaz 'Person', pero es necesaria por razones X.
+        image: e.target.files[0]
+      });
+    }
+  };
+
+  const filteredPiercings = piercings.filter(piercing =>
+    piercing.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-700 to-purple-500 flex flex-col items-center justify-center">
-        <div className="w-16 h-16 border-4 border-white border-t-purple-500 rounded-full animate-spin mb-4"></div>
-        <p className="text-white text-2xl">Cargando...</p>
-      </div>
-    );
+    return <div className="text-white text-2xl">Cargando piercings...</div>;
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-700 to-purple-500 flex items-center justify-center">
-        <div className="text-white text-center">
-          <p className="text-2xl mb-4">Se ha producido un error :c</p>
-          <p className="text-2xl mb-4">Contacta con el Administrador</p>
-          <p className="text-lg">{error}</p>
-        </div>
-      </div>
-    );
+    return <div className="text-white text-2xl">Error: {error}</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-700 to-purple-500">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-center mb-6">
-          <Link href="/" className="mr-4 text-white hover:text-purple-200 transition-all duration-300 transform hover:-translate-x-1">
-            <FaArrowLeft className="text-2xl" />
-          </Link>
-          <h1 className="text-4xl font-bold text-center text-white">Nuestros Piercings</h1>
+    <div className="space-y-6 p-4">
+      <h2 className="text-3xl font-bold text-white">Administración de Piercings</h2>
+      <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+        <div className="relative flex-1 w-full">
+          <input
+            type="text"
+            placeholder="Buscar piercings..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full p-2 pl-10 rounded bg-purple-800 text-white placeholder-purple-300"
+          />
+          <FaSearch className="absolute left-3 top-3 text-purple-300" />
         </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {currentPiercings.map((piercing) => (
-            <div key={piercing.id} className="bg-white bg-opacity-10 backdrop-blur-md rounded-lg shadow-lg overflow-hidden transform transition duration-500 hover:scale-105">
-              <img src={piercing.image} alt={piercing.name} className="w-full h-64 object-cover" />
-              <div className="p-6">
-                <h2 className="text-xl font-semibold text-white mb-2">{piercing.name}</h2>
-                <p className="text-gray-200 mb-4">{piercing.description}</p>
-                <p className="text-lg font-bold text-white">Precio: ${piercing.price}</p>
+        <button
+          onClick={handleAdd}
+          className="bg-green-500 text-white p-2 rounded hover:bg-green-600 transition duration-300 w-full sm:w-auto"
+        >
+          <FaPlus className="inline mr-2" /> Añadir Piercing
+        </button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredPiercings.map(piercing => (
+          <div key={piercing.id} className="bg-purple-800 rounded-lg p-4 relative">
+            {editingPiercing?.id === piercing.id ? (
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={editingPiercing.name}
+                  onChange={(e) => setEditingPiercing({...editingPiercing, name: e.target.value})}
+                  className="w-full p-2 rounded bg-purple-700 text-white"
+                />
+                <textarea
+                  value={editingPiercing.description}
+                  onChange={(e) => setEditingPiercing({...editingPiercing, description: e.target.value})}
+                  className="w-full p-2 rounded bg-purple-700 text-white"
+                />
+                <input
+                  type="number"
+                  value={editingPiercing.price}
+                  onChange={(e) => setEditingPiercing({...editingPiercing, price: parseFloat(e.target.value)})}
+                  className="w-full p-2 rounded bg-purple-700 text-white"
+                />
+                <input
+                  type="file"
+                  onChange={handleImageChange}
+                  className="w-full p-2 rounded bg-purple-700 text-white"
+                />
+                <button
+                  onClick={() => handleSave(editingPiercing)}
+                  className="bg-green-500 text-white p-2 rounded hover:bg-green-600 transition duration-300 w-full"
+                >
+                  Guardar
+                </button>
               </div>
-            </div>
-          ))}
-        </div>
-        
-        <div className="flex justify-center mb-12">
-          {Array.from({ length: Math.ceil(piercings.length / piercingsPerPage) }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => paginate(i + 1)}
-              className={`mx-1 px-4 py-2 rounded-full ${
-                currentPage === i + 1
-                  ? 'bg-white text-purple-700'
-                  : 'bg-purple-200 text-purple-700 hover:bg-white hover:text-purple-700'
-              } transition duration-300`}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
-
-        <div className="bg-white bg-opacity-10 backdrop-blur-md rounded-lg shadow-lg p-8">
-          <h2 className="text-3xl font-bold text-white mb-6">Piercer</h2>
-          <div className="flex flex-col md:flex-row items-center">
-            <img src="/yo3.jpg" alt="Piercer" className="w-64 h-64 object-cover rounded-full mb-6 md:mb-0 md:mr-8" />
-            <div>
-              <h3 className="text-2xl font-semibold text-white mb-2">Xavier Verdecie Ramos</h3>
-              <p className="text-gray-200 mb-4">Piercer profesional con años de experiencia en la industria. Especializado en piercings faciales y corporales.</p>
-              <p className="text-lg font-bold text-white mb-4">Teléfono: +53 58-22-84-00</p>
-              <a
-                href={whatsappLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center bg-green-500 text-white font-bold py-2 px-4 rounded-full hover:bg-green-600 transition duration-300"
-              >
-                <FaWhatsapp className="mr-2" />
-                Agenda una cita YA!
-              </a>
-            </div>
+            ) : (
+              <>
+                <img 
+                  // @ts-expect-error: La propiedad 'age' no está en la interfaz 'Person', pero es necesaria por razones X.
+                  src={piercing.image instanceof File ? URL.createObjectURL(piercing.image) : piercing.image} 
+                  alt={piercing.name} 
+                  className="w-full h-48 object-cover rounded-t-lg" 
+                />
+                <h3 className="text-xl font-bold text-white mt-2">{piercing.name}</h3>
+                <p className="text-purple-200">{piercing.description}</p>
+                <p className="text-white font-bold mt-2">Precio: ${piercing.price}</p>
+                <div className="absolute top-2 right-2 space-x-2">
+                  <button
+                    onClick={() => handleEdit(piercing)}
+                    className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-300"
+                  >
+                    <FaEdit />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(piercing.id)}
+                    className="bg-red-500 text-white p-2 rounded hover:bg-red-600 transition duration-300"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-        </div>
+        ))}
       </div>
     </div>
   );
 };
 
-export default PiercingPortfolio;
+export default PiercingsAdmin;
