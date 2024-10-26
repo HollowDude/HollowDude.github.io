@@ -8,7 +8,7 @@ interface Tattoo {
   id: number;
   name: string;
   description: string;
-  image: string;
+  image: string | File;
   date: string;
 }
 
@@ -81,7 +81,7 @@ const TattoosAdmin = () => {
       if (data.access) {
         Cookies.set('_access', data.access);
       }
-    } catch (error) {
+    } catch  (error) {
       console.error('Error refreshing token:', error);
       throw error;
     }
@@ -135,9 +135,8 @@ const TattoosAdmin = () => {
       formData.append('description', tattoo.description);
       formData.append('date', tattoo.date);
       
-      if (tattoo.image && tattoo.image.startsWith('data:image')) {
-        const blob = await fetch(tattoo.image).then(r => r.blob());
-        formData.append('image', blob, 'image.jpg');
+      if (tattoo.image instanceof File) {
+        formData.append('image', tattoo.image);
       }
 
       const response = await fetch(`${API_BASE_URL}/api/tatts/tattoos/${tattoo.id}/`, {
@@ -213,15 +212,10 @@ const TattoosAdmin = () => {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0] && editingTattoo) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditingTattoo({
-          ...editingTattoo,
-          image: reader.result as string
-        });
-      };
-      reader.readAsDataURL(file);
+      setEditingTattoo({
+        ...editingTattoo,
+        image: e.target.files[0]
+      });
     }
   };
 
@@ -295,7 +289,7 @@ const TattoosAdmin = () => {
             ) : (
               <>
                 <img 
-                  src={tattoo.image.startsWith('data:image') ? tattoo.image : `data:image/jpeg;base64,${tattoo.image}`} 
+                  src={tattoo.image instanceof File ? URL.createObjectURL(tattoo.image) : tattoo.image} 
                   alt={tattoo.name} 
                   className="w-full h-48 object-cover rounded-t-lg" 
                 />
