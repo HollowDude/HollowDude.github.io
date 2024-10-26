@@ -45,7 +45,6 @@ const PiercingsAdmin = () => {
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Token expirado, intentar refrescar
           await refreshToken();
           return fetchPiercings();
         }
@@ -131,13 +130,21 @@ const PiercingsAdmin = () => {
         throw new Error('No access token found');
       }
 
+      const formData = new FormData();
+      formData.append('name', piercing.name);
+      formData.append('description', piercing.description);
+      formData.append('price', piercing.price.toString());
+      
+      if (piercing.image instanceof File) {
+        formData.append('image', piercing.image);
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/${piercing.id}/`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(piercing),
+        body: formData,
         credentials: 'include',
       });
 
@@ -149,7 +156,8 @@ const PiercingsAdmin = () => {
         throw new Error('Failed to update piercing');
       }
 
-      setPiercings(piercings.map(p => p.id === piercing.id ? piercing : p));
+      const updatedPiercing = await response.json();
+      setPiercings(piercings.map(p => p.id === piercing.id ? updatedPiercing : p));
       setEditingPiercing(null);
     } catch (err) {
       setError('Error al actualizar el piercing');
@@ -162,7 +170,7 @@ const PiercingsAdmin = () => {
       name: 'Nuevo Piercing',
       description: 'Descripción del nuevo piercing',
       price: 0,
-      image: '/placeholder.svg',
+      image: '',
     };
 
     try {
@@ -171,13 +179,17 @@ const PiercingsAdmin = () => {
         throw new Error('No access token found');
       }
 
+      const formData = new FormData();
+      formData.append('name', newPiercing.name);
+      formData.append('description', newPiercing.description);
+      formData.append('price', newPiercing.price.toString());
+
       const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newPiercing),
+        body: formData,
         credentials: 'include',
       });
 
@@ -195,6 +207,15 @@ const PiercingsAdmin = () => {
     } catch (err) {
       setError('Error al añadir el piercing');
       console.error(err);
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0] && editingPiercing) {
+      setEditingPiercing({
+        ...editingPiercing,
+        image: e.target.files[0]
+      });
     }
   };
 
@@ -254,9 +275,8 @@ const PiercingsAdmin = () => {
                   className="w-full p-2 rounded bg-purple-700 text-white"
                 />
                 <input
-                  type="text"
-                  value={editingPiercing.image}
-                  onChange={(e) => setEditingPiercing({...editingPiercing, image: e.target.value})}
+                  type="file"
+                  onChange={handleImageChange}
                   className="w-full p-2 rounded bg-purple-700 text-white"
                 />
                 <button
@@ -268,7 +288,11 @@ const PiercingsAdmin = () => {
               </div>
             ) : (
               <>
-                <img src={piercing.image} alt={piercing.name} className="w-full h-48 object-cover rounded-t-lg" />
+                <img 
+                  src={piercing.image instanceof File ? URL.createObjectURL(piercing.image) : piercing.image} 
+                  alt={piercing.name} 
+                  className="w-full h-48 object-cover rounded-t-lg" 
+                />
                 <h3 className="text-xl font-bold text-white mt-2">{piercing.name}</h3>
                 <p className="text-purple-200">{piercing.description}</p>
                 <p className="text-white font-bold mt-2">Precio: ${piercing.price}</p>
