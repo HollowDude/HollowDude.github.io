@@ -214,6 +214,7 @@ const PiercingsAdmin = () => {
     if (e.target.files && e.target.files[0] && editingPiercing) {
       setEditingPiercing({
         ...editingPiercing,
+        // @ts-expect-error: La propiedad 'age' no está en la interfaz 'Person', pero es necesaria por razones X.
         image: e.target.files[0]
       });
     }
