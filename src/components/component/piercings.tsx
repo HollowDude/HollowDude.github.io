@@ -66,6 +66,7 @@ const PiercingPortfolio = () => {
       const tokenResponse = await fetch(`${API_BASE_URL}/api/auth/login/`, {
         method: 'POST',
         headers: {
+          
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -150,7 +151,7 @@ const PiercingPortfolio = () => {
       console.log("Datos de piercings obtenidos:", data);
       return data.map((piercing: Piercing) => ({
         ...piercing,
-        image: `data:image/jpeg;base64,${piercing.image}`
+        image: piercing.image.startsWith('data:image') ? piercing.image : `data:image/jpeg;base64,${piercing.image}`
       }));
     } catch (error) {
       console.error("Error al obtener datos de piercings:", error);
