@@ -148,7 +148,10 @@ const PiercingPortfolio = () => {
 
       const data = await piercingsResponse.json();
       console.log("Datos de piercings obtenidos:", data);
-      return data;
+      return data.map((piercing: Piercing) => ({
+        ...piercing,
+        image: `data:image/jpeg;base64,${piercing.image}`
+      }));
     } catch (error) {
       console.error("Error al obtener datos de piercings:", error);
       throw error;
@@ -209,7 +212,7 @@ const PiercingPortfolio = () => {
                   <img src={piercing.image} alt={piercing.name} className="w-full h-64 object-cover" />
                   <div className="p-6 flex-grow flex flex-col">
                     <h2 className="text-xl font-semibold text-white mb-2">{piercing.name}</h2>
-                    <p className="text-gray-200 mb-3 flex-grow">{piercing.description}</p>
+                    <p className="text-purple-200 mb-3 flex-grow">{piercing.description}</p>
                     <p className="text-lg font-bold text-white mb-4">Precio: ${piercing.price}</p>
                     <a
                       href={getWhatsAppLink(piercing.name, piercing.price)}
