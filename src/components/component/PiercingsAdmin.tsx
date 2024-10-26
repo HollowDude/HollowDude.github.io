@@ -134,9 +134,11 @@ const PiercingsAdmin = () => {
       formData.append('name', piercing.name);
       formData.append('description', piercing.description);
       formData.append('price', piercing.price.toString());
-      // @ts-expect-error: La propiedad 'age' no está en la interfaz 'Person', pero es necesaria por razones X.
-      if (piercing.image instanceof File) {
-        formData.append('image', piercing.image);
+      
+      if (piercing.image && piercing.image.startsWith('data:image')) {
+        const base64Data = piercing.image.split(',')[1];
+        const blob = await fetch(piercing.image).then(r => r.blob());
+        formData.append('image', blob, 'image.jpg');
       }
 
       const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/${piercing.id}/`, {
@@ -212,11 +214,15 @@ const PiercingsAdmin = () => {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0] && editingPiercing) {
-      setEditingPiercing({
-        ...editingPiercing,
-        // @ts-expect-error: La propiedad 'age' no está en la interfaz 'Person', pero es necesaria por razones X.
-        image: e.target.files[0]
-      });
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditingPiercing({
+          ...editingPiercing,
+          image: reader.result as string
+        });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -290,8 +296,7 @@ const PiercingsAdmin = () => {
             ) : (
               <>
                 <img 
-                  // @ts-expect-error: La propiedad 'age' no está en la interfaz 'Person', pero es necesaria por razones X.
-                  src={piercing.image instanceof File ? URL.createObjectURL(piercing.image) : piercing.image} 
+                  src={piercing.image.startsWith('data:image') ? piercing.image : `data:image/jpeg;base64,${piercing.image}`} 
                   alt={piercing.name} 
                   className="w-full h-48 object-cover rounded-t-lg" 
                 />
