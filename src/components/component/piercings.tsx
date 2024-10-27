@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FaWhatsapp, FaArrowLeft } from 'react-icons/fa';
 import Cookies from 'js-cookie';
 
@@ -10,7 +11,7 @@ interface Piercing {
   name: string;
   description: string;
   price: number;
-  image?: string;  // Make image optional
+  image?: string;
 }
 
 const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com';
@@ -149,13 +150,11 @@ const PiercingPortfolio = () => {
       const data = await piercingsResponse.json();
       console.log("Datos de piercings obtenidos:", data);
       
-      // Convert binary image data to base64
       return data.map((piercing: Piercing) => ({
         ...piercing,
         image: piercing.image 
-          // @ts-expect-error: Anha...
-          ? `data:image/jpeg;base64,${btoa(String.fromCharCode.apply(null, new Uint8Array(piercing.image)))}`
-          : '/placeholder.svg?height=300&width=300'
+          ? `data:image/jpeg;base64,${piercing.image}`
+          : undefined
       }));
     } catch (error) {
       console.error("Error al obtener datos de piercings:", error);
@@ -214,7 +213,18 @@ const PiercingPortfolio = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
               {currentPiercings.map((piercing) => (
                 <div key={piercing.id} className="bg-white bg-opacity-10 backdrop-blur-md rounded-lg shadow-lg overflow-hidden flex flex-col">
-                  <img src={piercing.image} alt={piercing.name} className="w-full h-64 object-cover" />
+                  <div className="relative w-full h-64">
+                    <Image
+                      src={piercing.image || '/placeholder.jpg'}
+                      alt={piercing.name}
+                      layout="fill"
+                      objectFit="cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/placeholder.jpg';
+                      }}
+                    />
+                  </div>
                   <div className="p-6 flex-grow flex flex-col">
                     <h2 className="text-xl font-semibold text-white mb-2">{piercing.name}</h2>
                     <p className="text-gray-200 mb-3 flex-grow">{piercing.description}</p>
@@ -253,7 +263,18 @@ const PiercingPortfolio = () => {
         <div className="bg-white bg-opacity-10 backdrop-blur-md rounded-lg shadow-lg p-8">
           <h2 className="text-3xl font-bold text-white mb-6">Perforadora</h2>
           <div className="flex flex-col md:flex-row items-center">
-            <img src="IMG_9752.jpg" alt="Perforadora" className="w-64 h-64 object-cover rounded-full mb-6 md:mb-0 md:mr-8" />
+            <div className="relative w-64 h-64 rounded-full overflow-hidden mb-6 md:mb-0 md:mr-8">
+              <Image
+                src="/IMG_9752.jpg"
+                alt="Perforadora"
+                layout="fill"
+                objectFit="cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/placeholder.jpg';
+                }}
+              />
+            </div>
             <div>
               <h3 className="text-2xl font-semibold text-white mb-2">Marisney Rivero Marquez</h3>
               <p className="text-gray-200 mb-4">Perforadora profesional con basta experiencia, trabaja con total higiene y con mucha delicadeza.</p>
