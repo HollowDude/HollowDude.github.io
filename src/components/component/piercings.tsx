@@ -215,8 +215,7 @@ const PiercingPortfolio = () => {
                 <div key={piercing.id} className="bg-white bg-opacity-10 backdrop-blur-md rounded-lg shadow-lg overflow-hidden flex flex-col">
                   <div className="relative w-full h-64">
                     <Image
-                      // @ts-expect-error: Anha...
-                      src={piercing.image}
+                      src={piercing.image || '/placeholder.jpg'}
                       alt={piercing.name}
                       layout="fill"
                       objectFit="cover"
