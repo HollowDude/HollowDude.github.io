@@ -153,6 +153,7 @@ const PiercingPortfolio = () => {
       return data.map((piercing: Piercing) => ({
         ...piercing,
         image: piercing.image 
+          // @ts-expect-error: Anha...
           ? `data:image/jpeg;base64,${btoa(String.fromCharCode.apply(null, new Uint8Array(piercing.image)))}`
           : '/placeholder.svg?height=300&width=300'
       }));
