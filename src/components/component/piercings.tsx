@@ -154,7 +154,7 @@ const PiercingPortfolio = () => {
         ...piercing,
         image: piercing.image 
           ? `data:image/jpeg;base64,${piercing.image}`
-          : undefined
+          : '/placeholder.jpg'
       }));
     } catch (error) {
       console.error("Error al obtener datos de piercings:", error);
@@ -215,14 +215,12 @@ const PiercingPortfolio = () => {
                 <div key={piercing.id} className="bg-white bg-opacity-10 backdrop-blur-md rounded-lg shadow-lg overflow-hidden flex flex-col">
                   <div className="relative w-full h-64">
                     <Image
-                      src={piercing.image || '/placeholder.jpg'}
+                      src={piercing.image}
                       alt={piercing.name}
                       layout="fill"
                       objectFit="cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/placeholder.jpg';
-                      }}
+                      placeholder="blur"
+                      blurDataURL="/placeholder.jpg"
                     />
                   </div>
                   <div className="p-6 flex-grow flex flex-col">
@@ -269,10 +267,8 @@ const PiercingPortfolio = () => {
                 alt="Perforadora"
                 layout="fill"
                 objectFit="cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = '/placeholder.jpg';
-                }}
+                placeholder="blur"
+                blurDataURL="/placeholder.jpg"
               />
             </div>
             <div>
