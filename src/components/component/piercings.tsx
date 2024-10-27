@@ -10,7 +10,7 @@ interface Piercing {
   name: string;
   description: string;
   price: number;
-  image: string;
+  image?: string;  // Make image optional
 }
 
 const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com';
@@ -148,7 +148,14 @@ const PiercingPortfolio = () => {
 
       const data = await piercingsResponse.json();
       console.log("Datos de piercings obtenidos:", data);
-      return data;
+      
+      // Convert binary image data to base64
+      return data.map((piercing: Piercing) => ({
+        ...piercing,
+        image: piercing.image 
+          ? `data:image/jpeg;base64,${btoa(String.fromCharCode.apply(null, new Uint8Array(piercing.image)))}`
+          : '/placeholder.svg?height=300&width=300'
+      }));
     } catch (error) {
       console.error("Error al obtener datos de piercings:", error);
       throw error;
