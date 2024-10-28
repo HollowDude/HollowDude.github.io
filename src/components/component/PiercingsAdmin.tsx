@@ -4,16 +4,27 @@ import React, { useState, useEffect } from 'react';
 import { FaEdit, FaTrash, FaPlus, FaSearch } from 'react-icons/fa';
 import Cookies from 'js-cookie';
 import Image from 'next/image';
+import { ErrorBoundary } from 'react-error-boundary';
 
 interface Piercing {
   id: number;
   name: string;
   description: string;
   price: number;
-  image: string | File;
+  image: string | File | null;
 }
 
 const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com';
+
+function ErrorFallback({error, resetErrorBoundary}) {
+  return (
+    <div role="alert" className="text-white bg-red-600 p-4 rounded-lg">
+      <p>Something went wrong:</p>
+      <pre className="mt-2">{error.message}</pre>
+      <button onClick={resetErrorBoundary} className="mt-4 bg-white text-red-600 p-2 rounded">Try again</button>
+    </div>
+  )
+}
 
 const PiercingsAdmin = () => {
   const [piercings, setPiercings] = useState<Piercing[]>([]);
@@ -53,7 +64,7 @@ const PiercingsAdmin = () => {
       }
 
       const data = await response.json();
-      setPiercings(data);
+      setPiercings(data.map(p => ({...p, image: p.image || null})));
     } catch (err) {
       setError('Error al cargar los piercings');
       console.error(err);
@@ -159,7 +170,7 @@ const PiercingsAdmin = () => {
       }
 
       const updatedPiercing = await response.json();
-      setPiercings(piercings.map(p => p.id === piercing.id ? updatedPiercing : p));
+      setPiercings(piercings.map(p => p.id === piercing.id ? {...updatedPiercing, image: updatedPiercing.image || null} : p));
       setEditingPiercing(null);
     } catch (err) {
       setError('Error al actualizar el piercing');
@@ -172,7 +183,7 @@ const PiercingsAdmin = () => {
       name: 'Nuevo Piercing',
       description: 'Descripción del nuevo piercing',
       price: 0,
-      image: '',
+      image: null,
     };
 
     try {
@@ -204,8 +215,8 @@ const PiercingsAdmin = () => {
       }
 
       const addedPiercing = await response.json();
-      setPiercings([...piercings, addedPiercing]);
-      setEditingPiercing(addedPiercing);
+      setPiercings([...piercings, {...addedPiercing, image: addedPiercing.image || null}]);
+      setEditingPiercing({...addedPiercing, image: addedPiercing.image || null});
     } catch (err) {
       setError('Error al añadir el piercing');
       console.error(err);
@@ -243,94 +254,96 @@ const PiercingsAdmin = () => {
   }
 
   return (
-    <div className="space-y-6 p-4">
-      <h2 className="text-3xl font-bold text-white">Administración de Piercings</h2>
-      <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
-        <div className="relative flex-1 w-full">
-          <input
-            type="text"
-            placeholder="Buscar piercings..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-2 pl-10 rounded bg-purple-800 text-white placeholder-purple-300"
-          />
-          <FaSearch className="absolute left-3 top-3 text-purple-300" />
-        </div>
-        <button
-          onClick={handleAdd}
-          className="bg-green-500 text-white p-2 rounded hover:bg-green-600 transition duration-300 w-full sm:w-auto"
-        >
-          <FaPlus className="inline mr-2" /> Añadir Piercing
-        </button>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredPiercings.map(piercing => (
-          <div key={piercing.id} className="bg-purple-800 rounded-lg p-4 relative">
-            {editingPiercing?.id === piercing.id ? (
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  value={editingPiercing.name}
-                  onChange={(e) => setEditingPiercing({...editingPiercing, name: e.target.value})}
-                  className="w-full p-2 rounded bg-purple-700 text-white"
-                />
-                <textarea
-                  value={editingPiercing.description}
-                  onChange={(e) => setEditingPiercing({...editingPiercing, description: e.target.value})}
-                  className="w-full p-2 rounded bg-purple-700 text-white"
-                />
-                <input
-                  type="number"
-                  value={editingPiercing.price}
-                  onChange={(e) => setEditingPiercing({...editingPiercing, price: parseFloat(e.target.value)})}
-                  className="w-full p-2 rounded bg-purple-700 text-white"
-                />
-                <input
-                  type="file"
-                  onChange={handleImageChange}
-                  className="w-full p-2 rounded bg-purple-700 text-white"
-                />
-                <button
-                  onClick={() => handleSave(editingPiercing)}
-                  className="bg-green-500 text-white p-2 rounded hover:bg-green-600 transition duration-300 w-full"
-                >
-                  Guardar
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="relative w-full h-48">
-                  <Image
-                    src={typeof piercing.image === 'string' ? piercing.image : URL.createObjectURL(piercing.image)}
-                    alt={piercing.name}
-                    layout="fill"
-                    objectFit="cover"
-                    className="rounded-t-lg"
-                  />
-                </div>
-                <h3 className="text-xl font-bold text-white mt-2">{piercing.name}</h3>
-                <p className="text-purple-200">{piercing.description}</p>
-                <p className="text-white font-bold mt-2">Precio: ${piercing.price}</p>
-                <div className="absolute top-2 right-2 space-x-2">
-                  <button
-                    onClick={() => handleEdit(piercing)}
-                    className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-300"
-                  >
-                    <FaEdit />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(piercing.id)}
-                    className="bg-red-500 text-white p-2 rounded hover:bg-red-600 transition duration-300"
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              </>
-            )}
+    <ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => fetchPiercings()}>
+      <div className="space-y-6 p-4">
+        <h2 className="text-3xl font-bold text-white">Administración de Piercings</h2>
+        <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+          <div className="relative flex-1 w-full">
+            <input
+              type="text"
+              placeholder="Buscar piercings..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full p-2 pl-10 rounded bg-purple-800 text-white placeholder-purple-300"
+            />
+            <FaSearch className="absolute left-3 top-3 text-purple-300" />
           </div>
-        ))}
+          <button
+            onClick={handleAdd}
+            className="bg-green-500 text-white p-2 rounded hover:bg-green-600 transition duration-300 w-full sm:w-auto"
+          >
+            <FaPlus className="inline mr-2" /> Añadir Piercing
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredPiercings.map(piercing => (
+            <div key={piercing.id} className="bg-purple-800 rounded-lg p-4 relative">
+              {editingPiercing?.id === piercing.id ? (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={editingPiercing.name}
+                    onChange={(e) => setEditingPiercing({...editingPiercing, name: e.target.value})}
+                    className="w-full p-2 rounded bg-purple-700 text-white"
+                  />
+                  <textarea
+                    value={editingPiercing.description}
+                    onChange={(e) => setEditingPiercing({...editingPiercing, description: e.target.value})}
+                    className="w-full p-2 rounded bg-purple-700 text-white"
+                  />
+                  <input
+                    type="number"
+                    value={editingPiercing.price}
+                    onChange={(e) => setEditingPiercing({...editingPiercing, price: parseFloat(e.target.value)})}
+                    className="w-full p-2 rounded bg-purple-700 text-white"
+                  />
+                  <input
+                    type="file"
+                    onChange={handleImageChange}
+                    className="w-full p-2 rounded bg-purple-700 text-white"
+                  />
+                  <button
+                    onClick={() => handleSave(editingPiercing)}
+                    className="bg-green-500 text-white p-2 rounded hover:bg-green-600 transition duration-300 w-full"
+                  >
+                    Guardar
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="relative w-full h-48">
+                    <Image
+                      src={piercing.image instanceof File ? URL.createObjectURL(piercing.image) : (piercing.image || '/placeholder.svg?height=300&width=300')}
+                      alt={piercing.name}
+                      layout="fill"
+                      objectFit="cover"
+                      className="rounded-t-lg"
+                    />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mt-2">{piercing.name}</h3>
+                  <p className="text-purple-200">{piercing.description}</p>
+                  <p className="text-white font-bold mt-2">Precio: ${piercing.price}</p>
+                  <div className="absolute top-2 right-2 space-x-2">
+                    <button
+                      onClick={() => handleEdit(piercing)}
+                      className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-300"
+                    >
+                      <FaEdit />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(piercing.id)}
+                      className="bg-red-500 text-white p-2 rounded hover:bg-red-600 transition duration-300"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 };
 
