@@ -15,7 +15,7 @@ interface Piercing {
 }
 
 const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com';
-
+// @ts-expect-error: Anha
 function ErrorFallback({error, resetErrorBoundary}) {
   return (
     <div role="alert" className="text-white bg-red-600 p-4 rounded-lg">
