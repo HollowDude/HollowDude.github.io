@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { FaEdit, FaTrash, FaPlus, FaSearch } from 'react-icons/fa';
 import Cookies from 'js-cookie';
+import Image from 'next/image';
 
 interface Piercing {
   id: number;
   name: string;
   description: string;
   price: number;
-  image: string;
+  image: string | File;
 }
 
 const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com';
@@ -134,9 +135,10 @@ const PiercingsAdmin = () => {
       formData.append('name', piercing.name);
       formData.append('description', piercing.description);
       formData.append('price', piercing.price.toString());
-      // @ts-expect-error: La propiedad 'age' no está en la interfaz 'Person', pero es necesaria por razones X.
+
       if (piercing.image instanceof File) {
-        formData.append('image', piercing.image);
+        const base64Image = await convertToBase64(piercing.image);
+        formData.append('image', base64Image);
       }
 
       const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/${piercing.id}/`, {
@@ -214,10 +216,18 @@ const PiercingsAdmin = () => {
     if (e.target.files && e.target.files[0] && editingPiercing) {
       setEditingPiercing({
         ...editingPiercing,
-        // @ts-expect-error: La propiedad 'age' no está en la interfaz 'Person', pero es necesaria por razones X.
         image: e.target.files[0]
       });
     }
+  };
+
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
   };
 
   const filteredPiercings = piercings.filter(piercing =>
@@ -289,12 +299,15 @@ const PiercingsAdmin = () => {
               </div>
             ) : (
               <>
-                <img 
-                  // @ts-expect-error: La propiedad 'age' no está en la interfaz 'Person', pero es necesaria por razones X.
-                  src={piercing.image instanceof File ? URL.createObjectURL(piercing.image) : piercing.image} 
-                  alt={piercing.name} 
-                  className="w-full h-48 object-cover rounded-t-lg" 
-                />
+                <div className="relative w-full h-48">
+                  <Image
+                    src={typeof piercing.image === 'string' ? piercing.image : URL.createObjectURL(piercing.image)}
+                    alt={piercing.name}
+                    layout="fill"
+                    objectFit="cover"
+                    className="rounded-t-lg"
+                  />
+                </div>
                 <h3 className="text-xl font-bold text-white mt-2">{piercing.name}</h3>
                 <p className="text-purple-200">{piercing.description}</p>
                 <p className="text-white font-bold mt-2">Precio: ${piercing.price}</p>
