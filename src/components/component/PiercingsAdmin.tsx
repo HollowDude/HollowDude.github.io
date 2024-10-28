@@ -64,6 +64,7 @@ const PiercingsAdmin = () => {
       }
 
       const data = await response.json();
+      // @ts-expect-error: Anha
       setPiercings(data.map(p => ({...p, image: p.image || null})));
     } catch (err) {
       setError('Error al cargar los piercings');
