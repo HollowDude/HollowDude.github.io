@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { FaEdit, FaTrash, FaPlus, FaSearch } from 'react-icons/fa';
-import Cookies from 'js-cookie';
 
 interface Tattoo {
   id: number;
@@ -30,24 +29,9 @@ const TattoosAdmin = () => {
       setLoading(true);
       setError(null);
 
-      const accessToken = Cookies.get('_access');
-      if (!accessToken) {
-        throw new Error('No access token found');
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/tatts/tattoos/`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
+      const response = await fetch(`${API_BASE_URL}/api/tatts/tattoos/`);
 
       if (!response.ok) {
-        if (response.status === 401) {
-          await refreshToken();
-          return fetchTattoos();
-        }
         throw new Error('Failed to fetch tattoos');
       }
 
@@ -61,32 +45,6 @@ const TattoosAdmin = () => {
     }
   };
 
-  const refreshToken = async () => {
-    try {
-      const refreshToken = Cookies.get('_refresh');
-      const response = await fetch(`${API_BASE_URL}/api/auth/token/refresh/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refresh: refreshToken }),
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to refresh token');
-      }
-
-      const data = await response.json();
-      if (data.access) {
-        Cookies.set('_access', data.access);
-      }
-    } catch  (error) {
-      console.error('Error refreshing token:', error);
-      throw error;
-    }
-  };
-
   const handleEdit = (tattoo: Tattoo) => {
     setEditingTattoo(tattoo);
   };
@@ -94,24 +52,11 @@ const TattoosAdmin = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este tatuaje?')) {
       try {
-        const accessToken = Cookies.get('_access');
-        if (!accessToken) {
-          throw new Error('No access token found');
-        }
-
         const response = await fetch(`${API_BASE_URL}/api/tatts/tattoos/${id}/`, {
           method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
-          credentials: 'include',
         });
 
         if (!response.ok) {
-          if (response.status === 401) {
-            await refreshToken();
-            return handleDelete(id);
-          }
           throw new Error('Failed to delete tattoo');
         }
 
@@ -125,11 +70,6 @@ const TattoosAdmin = () => {
 
   const handleSave = async (tattoo: Tattoo) => {
     try {
-      const accessToken = Cookies.get('_access');
-      if (!accessToken) {
-        throw new Error('No access token found');
-      }
-
       const formData = new FormData();
       formData.append('name', tattoo.name);
       formData.append('description', tattoo.description);
@@ -141,18 +81,10 @@ const TattoosAdmin = () => {
 
       const response = await fetch(`${API_BASE_URL}/api/tatts/tattoos/${tattoo.id}/`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
         body: formData,
-        credentials: 'include',
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          await refreshToken();
-          return handleSave(tattoo);
-        }
         throw new Error('Failed to update tattoo');
       }
 
@@ -174,11 +106,6 @@ const TattoosAdmin = () => {
     };
 
     try {
-      const accessToken = Cookies.get('_access');
-      if (!accessToken) {
-        throw new Error('No access token found');
-      }
-
       const formData = new FormData();
       formData.append('name', newTattoo.name);
       formData.append('description', newTattoo.description);
@@ -186,18 +113,10 @@ const TattoosAdmin = () => {
 
       const response = await fetch(`${API_BASE_URL}/api/tatts/tattoos/`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
         body: formData,
-        credentials: 'include',
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          await refreshToken();
-          return handleAdd();
-        }
         throw new Error('Failed to add tattoo');
       }
 

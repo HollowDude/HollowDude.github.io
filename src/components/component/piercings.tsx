@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FaWhatsapp, FaArrowLeft } from 'react-icons/fa';
-import Cookies from 'js-cookie';
 
 interface Piercing {
   id: number;
@@ -16,10 +15,6 @@ interface Piercing {
 
 const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com';
 
-// En un entorno real, estas credenciales deberían estar en un .env
-const USERNAME = process.env.NEXT_PUBLIC_USERNAME;
-const PASSWORD = process.env.NEXT_PUBLIC_PASSWORD;
-
 const PiercingPortfolio = () => {
   const [piercings, setPiercings] = useState<Piercing[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -28,137 +23,32 @@ const PiercingPortfolio = () => {
   const piercingsPerPage = 5;
 
   useEffect(() => {
-    const fetchPiercings = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        let accessToken = Cookies.get('_access');
-        const refreshToken = Cookies.get('_refresh');
-        console.log("Access token inicial:", accessToken);
-
-        if (!accessToken || !refreshToken) {
-          console.log("No hay tokens, obteniendo nuevos...");
-          await getNewTokens();
-          accessToken = Cookies.get('_access');
-          console.log("Nuevo access token:", accessToken);
-        }
-
-        if (accessToken) {
-          console.log("Intentando obtener datos de piercings...");
-          const piercingsData = await fetchPiercingsData(accessToken);
-          setPiercings(piercingsData);
-        } else {
-          throw new Error('No se pudo obtener el token de acceso');
-        }
-      } catch (err) {
-        console.error('Error detallado:', err);
-        setError('Error al cargar los piercings');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchPiercings();
   }, []);
 
-  const getNewTokens = async () => {
+  const fetchPiercings = async () => {
     try {
-      const tokenResponse = await fetch(`${API_BASE_URL}/api/auth/login/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: USERNAME,
-          password: PASSWORD
-        }),
-        credentials: 'include',
-      });
+      setLoading(true);
+      setError(null);
 
-      if (!tokenResponse.ok) {
-        throw new Error(`Failed to obtain access token. Status: ${tokenResponse.status}`);
+      const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/`);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch piercings');
       }
 
-      const data = await tokenResponse.json();
-      console.log("Respuesta de login:", data);
-
-      // Establecer manualmente las cookies si el backend no lo hace
-      if (data.access) Cookies.set('_access', data.access);
-      if (data.refresh) Cookies.set('_refresh', data.refresh);
-
-      console.log("Tokens obtenidos y guardados");
-    } catch (error) {
-      console.error("Error al obtener tokens:", error);
-      throw error;
-    }
-  };
-
-  const refreshAccessToken = async () => {
-    try {
-      const refreshToken = Cookies.get('_refresh');
-      const refreshResponse = await fetch(`${API_BASE_URL}/api/auth/token/refresh/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refresh: refreshToken }),
-        credentials: 'include',
-      });
-
-      if (!refreshResponse.ok) {
-        throw new Error(`Failed to refresh token. Status: ${refreshResponse.status}`);
-      }
-
-      const data = await refreshResponse.json();
-      if (data.access) {
-        Cookies.set('_access', data.access);
-        console.log("Token de acceso refrescado");
-      }
-    } catch (error) {
-      console.error("Error al refrescar el token:", error);
-      throw error;
-    }
-  };
-
-  const fetchPiercingsData = async (accessToken: string): Promise<Piercing[]> => {
-    try {
-      const piercingsResponse = await fetch(`${API_BASE_URL}/api/piercs/piercings/`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-
-      if (piercingsResponse.status === 401) {
-        console.log("Token expirado, intentando refrescar...");
-        await refreshAccessToken();
-        const newAccessToken = Cookies.get('_access');
-        if (newAccessToken) {
-          return fetchPiercingsData(newAccessToken);
-        } else {
-          throw new Error('No se pudo refrescar el token de acceso');
-        }
-      }
-
-      if (!piercingsResponse.ok) {
-        throw new Error(`Failed to fetch piercings data. Status: ${piercingsResponse.status}`);
-      }
-
-      const data = await piercingsResponse.json();
-      console.log("Datos de piercings obtenidos:", data);
-      
-      return data.map((piercing: Piercing) => ({
+      const data = await response.json();
+      setPiercings(data.map((piercing: Piercing) => ({
         ...piercing,
         image: piercing.image 
           ? `data:image/jpeg;base64,${piercing.image}`
           : '/placeholder.jpg'
-      }));
-    } catch (error) {
-      console.error("Error al obtener datos de piercings:", error);
-      throw error;
+      })));
+    } catch (err) {
+      console.error('Error detallado:', err);
+      setError('Error al cargar los piercings');
+    } finally {
+      setLoading(false);
     }
   };
 

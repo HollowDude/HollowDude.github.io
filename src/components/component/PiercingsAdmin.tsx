@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { FaEdit, FaTrash, FaPlus, FaSearch, FaUpload } from 'react-icons/fa';
-import Cookies from 'js-cookie';
 import Image from 'next/image';
 
 interface Piercing {
@@ -31,24 +30,9 @@ const PiercingsAdmin: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const accessToken = Cookies.get('_access');
-      if (!accessToken) {
-        throw new Error('No access token found');
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
+      const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/`);
 
       if (!response.ok) {
-        if (response.status === 401) {
-          await refreshToken();
-          return fetchPiercings();
-        }
         throw new Error('Failed to fetch piercings');
       }
 
@@ -62,36 +46,6 @@ const PiercingsAdmin: React.FC = () => {
     }
   };
 
-  const refreshToken = async () => {
-    try {
-      const refreshToken = Cookies.get('_refresh');
-      if (!refreshToken) {
-        throw new Error('No refresh token found');
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/auth/token/refresh/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refresh: refreshToken }),
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to refresh token');
-      }
-
-      const data = await response.json();
-      if (data.access) {
-        Cookies.set('_access', data.access);
-      }
-    } catch (error) {
-      console.error('Error refreshing token:', error);
-      throw error;
-    }
-  };
-
   const handleEdit = (piercing: Piercing) => {
     setEditingPiercing(piercing);
   };
@@ -99,24 +53,11 @@ const PiercingsAdmin: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este piercing?')) {
       try {
-        const accessToken = Cookies.get('_access');
-        if (!accessToken) {
-          throw new Error('No access token found');
-        }
-
         const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/${id}/`, {
           method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
-          credentials: 'include',
         });
 
         if (!response.ok) {
-          if (response.status === 401) {
-            await refreshToken();
-            return handleDelete(id);
-          }
           throw new Error('Failed to delete piercing');
         }
 
@@ -130,11 +71,6 @@ const PiercingsAdmin: React.FC = () => {
 
   const handleSave = async (piercing: Piercing) => {
     try {
-      const accessToken = Cookies.get('_access');
-      if (!accessToken) {
-        throw new Error('No access token found');
-      }
-
       const formData = new FormData();
       formData.append('name', piercing.name);
       formData.append('description', piercing.description);
@@ -146,18 +82,10 @@ const PiercingsAdmin: React.FC = () => {
 
       const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/${piercing.id}/`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
         body: formData,
-        credentials: 'include',
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          await refreshToken();
-          return handleSave(piercing);
-        }
         throw new Error('Failed to update piercing');
       }
 
@@ -179,11 +107,6 @@ const PiercingsAdmin: React.FC = () => {
     };
 
     try {
-      const accessToken = Cookies.get('_access');
-      if (!accessToken) {
-        throw new Error('No access token found');
-      }
-
       const formData = new FormData();
       formData.append('name', newPiercing.name);
       formData.append('description', newPiercing.description);
@@ -191,18 +114,10 @@ const PiercingsAdmin: React.FC = () => {
 
       const response = await fetch(`${API_BASE_URL}/api/piercs/piercings/`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
         body: formData,
-        credentials: 'include',
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          await refreshToken();
-          return handleAdd();
-        }
         throw new Error('Failed to add piercing');
       }
 
@@ -243,7 +158,7 @@ const PiercingsAdmin: React.FC = () => {
 
   return (
     <div className="space-y-6 p-4">
-      <h2 className="text-3xl font-bold text-white">Administración de Piercings</h2>
+      <h2 className="text-3xl font-bold text-white">Administración de  Piercings</h2>
       <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
         <div className="relative flex-1 w-full">
           <input
