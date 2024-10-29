@@ -30,7 +30,7 @@ export default function LoginPage() {
       if (response.status === 200) {
         const data = await response.json();
         localStorage.setItem('authToken', data.token);
-        router.push('/admin/dashboard');
+        router.push('/admin');
       } else {
         setError('Credenciales inválidas');
       }
