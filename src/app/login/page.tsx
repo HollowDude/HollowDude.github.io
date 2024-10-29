@@ -1,22 +1,30 @@
 'use client'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
-const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com';
+const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com'
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    // Check if already authenticated
+    const token = localStorage.getItem('authToken')
+    if (token) {
+      router.push('/admin')
+    }
+  }, [router])
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
+    e.preventDefault()
+    setError(null)
+    setIsLoading(true)
 
     try {
       const response = await fetch(`${API_BASE_URL}/auth/`, {
@@ -25,22 +33,23 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ username, password }),
-      });
+      })
 
-      if (response.status === 200) {
-        const data = await response.json();
-        localStorage.setItem('authToken', data.token);
-        router.push('/admin');
+      const data = await response.json()
+
+      if (response.ok && data.token) {
+        localStorage.setItem('authToken', data.token)
+        router.push('/admin')
       } else {
-        setError('Credenciales inválidas');
+        setError(data.message || 'Credenciales inválidas')
       }
     } catch (err) {
-      setError('Ocurrió un error. Por favor intente nuevamente.');
-      console.error(err);
+      setError('Ocurrió un error. Por favor intente nuevamente.')
+      console.error(err)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-700 to-purple-500 flex items-center justify-center px-4 sm:px-6 lg:px-8">
@@ -130,5 +139,5 @@ export default function LoginPage() {
         </form>
       </div>
     </div>
-  );
+  )
 }
