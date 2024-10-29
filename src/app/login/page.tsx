@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 
 const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com'
 
@@ -11,13 +10,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem('isAuthenticated')
-    if (isAuthenticated === 'true') {
+    // Verificar si ya está autenticado
+    const isAuth = localStorage.getItem('isAuthenticated') === 'true'
+    if (isAuth) {
+      console.log('Already authenticated, redirecting to admin')
       router.push('/admin')
     }
+    setIsCheckingAuth(false)
   }, [router])
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -41,6 +44,7 @@ export default function LoginPage() {
       console.log('Login response:', data)
 
       if (response.ok) {
+        console.log('Login successful, setting auth state')
         localStorage.setItem('isAuthenticated', 'true')
         localStorage.setItem('username', username)
         router.push('/admin')
@@ -55,19 +59,19 @@ export default function LoginPage() {
     }
   }
 
+  // Mostrar loading mientras se verifica la autenticación
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-700 to-purple-500 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white"></div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-700 to-purple-500 flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-2xl">
         <div>
-          <div className="relative w-24 h-24 mx-auto">
-            <Image
-              src="/logo.png"
-              alt="Logo"
-              fill
-              className="object-contain"
-              priority
-            />
-          </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Iniciar Sesión
           </h2>
