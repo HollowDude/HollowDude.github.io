@@ -14,8 +14,8 @@ export default function LoginPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken')
-    if (token) {
+    const isAuthenticated = localStorage.getItem('isAuthenticated')
+    if (isAuthenticated === 'true') {
       router.push('/admin')
     }
   }, [router])
@@ -26,7 +26,6 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      // Primer paso: obtener el token de autenticación
       const response = await fetch(`${API_BASE_URL}/auth/`, {
         method: 'POST',
         headers: {
@@ -39,29 +38,18 @@ export default function LoginPage() {
       })
 
       const data = await response.json()
-      console.log('Respuesta del servidor:', data) // Para debugging
+      console.log('Login response:', data)
 
       if (response.ok) {
-        // Verificar si tenemos acceso autorizado
-        if (data.authenticated === true || data.status === 'success') {
-          localStorage.setItem('isAuthenticated', 'true')
-          router.push('/admin')
-        } else {
-          setError('Acceso no autorizado')
-        }
+        localStorage.setItem('isAuthenticated', 'true')
+        localStorage.setItem('username', username)
+        router.push('/admin')
       } else {
-        // Manejar diferentes tipos de errores
-        if (data.detail) {
-          setError(data.detail)
-        } else if (data.message) {
-          setError(data.message)
-        } else {
-          setError('Error al iniciar sesión. Por favor, intente nuevamente.')
-        }
+        setError(data.detail || data.message || 'Credenciales inválidas')
       }
     } catch (err) {
-      console.error('Error durante el login:', err)
-      setError('Error de conexión. Por favor, verifique su conexión a internet.')
+      console.error('Login error:', err)
+      setError('Error de conexión. Por favor, intente nuevamente.')
     } finally {
       setIsLoading(false)
     }
@@ -83,11 +71,6 @@ export default function LoginPage() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Iniciar Sesión
           </h2>
-          {process.env.NODE_ENV === 'development' && (
-            <p className="mt-2 text-center text-sm text-gray-600">
-              API URL: {API_BASE_URL}
-            </p>
-          )}
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
@@ -158,21 +141,6 @@ export default function LoginPage() {
             </button>
           </div>
         </form>
-
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-4 bg-gray-100 rounded-md">
-            <p className="text-xs text-gray-600">Estado actual:</p>
-            <pre className="text-xs text-gray-600 mt-2 overflow-auto">
-              {JSON.stringify({
-                username,
-                isLoading,
-                error,
-                isAuthenticated: localStorage.getItem('isAuthenticated'),
-                currentPath: typeof window !== 'undefined' ? window.location.pathname : ''
-              }, null, 2)}
-            </pre>
-          </div>
-        )}
       </div>
     </div>
   )
