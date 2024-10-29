@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import AdminPanel from '@/components/AdminPanel'
+import AdminPanel from '@/components/component/AdminPanel';
 
 export default function AdminLayout({
   children,
