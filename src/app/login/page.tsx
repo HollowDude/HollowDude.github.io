@@ -17,6 +17,7 @@ export default function LoginPage() {
     // Check if already authenticated
     const token = localStorage.getItem('authToken')
     if (token) {
+      console.log('Token found, redirecting to admin...')
       router.push('/admin')
     }
   }, [router])
@@ -25,6 +26,7 @@ export default function LoginPage() {
     e.preventDefault()
     setError(null)
     setIsLoading(true)
+    console.log('Attempting login...')
 
     try {
       const response = await fetch(`${API_BASE_URL}/auth/`, {
@@ -33,23 +35,56 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ username, password }),
+        credentials: 'include'
       })
 
+      console.log('Login response status:', response.status)
       const data = await response.json()
+      console.log('Login response data:', data)
 
-      if (response.ok && data.token) {
-        localStorage.setItem('authToken', data.token)
-        router.push('/admin')
+      if (response.ok) {
+        console.log('Login successful, setting token...')
+        // Asegurarse de que data.token existe
+        if (data.token) {
+          localStorage.setItem('authToken', data.token)
+          console.log('Token stored, redirecting...')
+          // Forzar la navegación con replace
+          router.replace('/admin')
+          // Agregar un respaldo por si router.replace falla
+          setTimeout(() => {
+            window.location.href = '/admin'
+          }, 1000)
+        } else {
+          console.error('No token received in response')
+          setError('Error en la respuesta del servidor: No se recibió el token')
+        }
       } else {
+        console.error('Login failed:', data)
         setError(data.message || 'Credenciales inválidas')
       }
     } catch (err) {
+      console.error('Login error:', err)
       setError('Ocurrió un error. Por favor intente nuevamente.')
-      console.error(err)
     } finally {
       setIsLoading(false)
     }
   }
+
+  // Función para mostrar el estado actual
+  const debugState = () => {
+    console.log({
+      username,
+      isLoading,
+      error,
+      currentToken: localStorage.getItem('authToken'),
+      currentPath: window.location.pathname
+    })
+  }
+
+  // Llamar a debugState cuando cambie cualquier estado relevante
+  useEffect(() => {
+    debugState()
+  }, [username, isLoading, error])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-700 to-purple-500 flex items-center justify-center px-4 sm:px-6 lg:px-8">
@@ -137,7 +172,23 @@ export default function LoginPage() {
             </button>
           </div>
         </form>
+
+        {/* Debug info en desarrollo */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 p-4 bg-gray-100 rounded-md">
+            <p className="text-xs text-gray-600">Debug Info:</p>
+            <pre className="text-xs text-gray-600 mt-2">
+              {JSON.stringify({
+                username,
+                isLoading,
+                error,
+                hasToken: !!localStorage.getItem('authToken'),
+                path: typeof window !== 'undefined' ? window.location.pathname : ''
+              }, null, 2)}
+            </pre>
+          </div>
+        )}
       </div>
     </div>
-  )
+  );
 }
