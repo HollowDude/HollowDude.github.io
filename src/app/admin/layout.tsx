@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import AdminPanel from '@/components/component/AdminPanel';
+import AdminPanel from '@/components/component/AdminPanel'
 
 export default function AdminLayout({
   children,
@@ -14,34 +14,14 @@ export default function AdminLayout({
   const router = useRouter()
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('authToken')
-      if (!token) {
+    const checkAuth = () => {
+      const isAuth = localStorage.getItem('isAuthenticated') === 'true'
+      if (!isAuth) {
         router.push('/login')
         return
       }
-
-      try {
-        const response = await fetch('https://vinilos-backend-2cwk.onrender.com/auth/verify/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        })
-
-        if (response.ok) {
-          setIsAuthenticated(true)
-        } else {
-          localStorage.removeItem('authToken')
-          router.push('/login')
-        }
-      } catch (error) {
-        console.error('Error verifying auth:', error)
-        router.push('/login')
-      } finally {
-        setIsLoading(false)
-      }
+      setIsAuthenticated(true)
+      setIsLoading(false)
     }
 
     checkAuth()
