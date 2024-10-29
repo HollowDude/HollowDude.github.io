@@ -1,35 +1,20 @@
 'use client'
 
-import React from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { FaRing, FaPencilAlt, FaSignOutAlt } from 'react-icons/fa';
-import Cookies from 'js-cookie';
+import React from 'react'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import { FaRing, FaPencilAlt, FaSignOutAlt } from 'react-icons/fa'
 
-const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com';
+const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com'
 
 const AdminPanel = () => {
-  const pathname = usePathname();
-  const router = useRouter();
+  const pathname = usePathname()
+  const router = useRouter()
 
-  const handleLogout = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        Cookies.remove('_access');
-        Cookies.remove('_refresh');
-        router.push('/login');
-      } else {
-        console.error('Error al cerrar sesión');
-      }
-    } catch (err) {
-      console.error('Error durante el cierre de sesión:', err);
-    }
-  };
+  const handleLogout = () => {
+    localStorage.removeItem('authToken')
+    router.push('/login')
+  }
 
   return (
     <div className="w-full md:w-64 bg-purple-800 text-white p-6">
@@ -61,7 +46,7 @@ const AdminPanel = () => {
           <li>
             <button
               onClick={handleLogout}
-              className="flex items-center space-x-2 w-full p-2 rounded  hover:bg-purple-700"
+              className="flex items-center space-x-2 w-full p-2 rounded hover:bg-purple-700"
             >
               <FaSignOutAlt />
               <span>Cerrar Sesión</span>
@@ -70,7 +55,7 @@ const AdminPanel = () => {
         </ul>
       </nav>
     </div>
-  );
-};
+  )
+}
 
-export default AdminPanel;
+export default AdminPanel
