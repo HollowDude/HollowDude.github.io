@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 
 const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com';
 
-const Login: React.FC = () => {
+export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +72,4 @@ const Login: React.FC = () => {
       </form>
     </div>
   );
-};
-
-export default Login;
+}
