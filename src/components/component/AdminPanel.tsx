@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { FaRing, FaPencilAlt, FaSignOutAlt } from 'react-icons/fa'
 
-const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com'
+//const API_BASE_URL = 'https://vinilos-backend-2cwk.onrender.com'
 
 const AdminPanel = () => {
   const pathname = usePathname()
