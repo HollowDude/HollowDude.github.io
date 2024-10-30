@@ -34,7 +34,7 @@ export default function LoginPage() {
       } else {
         setError('Credenciales inválidas')
       }
-    } catch (err) {
+    } catch (err : unknown ) {
       setError('Error de conexión. Por favor, intente nuevamente.')
     } finally {
       setIsLoading(false)
