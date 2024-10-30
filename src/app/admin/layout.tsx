@@ -1,57 +1,62 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
-import AdminPanel from '@/components/component/AdminPanel'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { FaRing, FaPencilAlt, FaSignOutAlt } from 'react-icons/fa'
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
-  const pathname = usePathname()
 
   useEffect(() => {
-    // Evitar verificaciones múltiples
-    if (isAuthenticated !== null) return;
-
-    const checkAuth = () => {
-      const isAuth = localStorage.getItem('isAuthenticated') === 'true'
-      console.log('Checking auth state:', isAuth)
-      
-      if (!isAuth && pathname !== '/login') {
-        console.log('Not authenticated, redirecting to login')
-        router.push('/login')
-        return
-      }
-      
-      setIsAuthenticated(isAuth)
+    const token = localStorage.getItem('authToken')
+    if (!token) {
+      router.push('/login')
+    } else {
+      setIsLoading(false)
     }
+  }, [router])
 
-    checkAuth()
-  }, [isAuthenticated, router, pathname])
-
-  // Mostrar nada mientras se verifica la autenticación
-  if (isAuthenticated === null) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-700 to-purple-500 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white"></div>
-      </div>
-    )
+  const handleLogout = () => {
+    localStorage.removeItem('authToken')
+    router.push('/login')
   }
 
-  // Si no está autenticado, no mostrar nada (la redirección ya se habrá iniciado)
-  if (!isAuthenticated) {
-    return null
+  if (isLoading) {
+    return <div>Cargando...</div>
   }
 
-  // Si está autenticado, mostrar el layout
   return (
-    <div className="flex min-h-screen">
-      <AdminPanel />
-      <main className="flex-1 p-8 bg-gray-100">
+    <div className="flex h-screen bg-gray-100">
+      <nav className="w-64 bg-purple-800 text-white p-6">
+        <h1 className="text-2xl font-bold mb-8">Admin Panel</h1>
+        <ul className="space-y-4">
+          <li>
+            <Link href="/admin/piercings" className="flex items-center space-x-2 hover:text-purple-300">
+              <FaRing />
+              <span>Piercings</span>
+            </Link>
+          </li>
+          <li>
+            <Link href="/admin/tattoos" className="flex items-center space-x-2 hover:text-purple-300">
+              <FaPencilAlt />
+              <span>Tatuajes</span>
+            </Link>
+          </li>
+          <li>
+            <button onClick={handleLogout} className="flex items-center space-x-2 hover:text-purple-300">
+              <FaSignOutAlt />
+              <span>Cerrar sesión</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+      <main className="flex-1 p-8 overflow-auto">
         {children}
       </main>
     </div>
