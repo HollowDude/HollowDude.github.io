@@ -19,7 +19,7 @@ export default function TattoosAdminPage() {
   const [error, setError] = useState<string | null>(null)
   const [editingTattoo, setEditingTattoo] = useState<Tattoo | null>(null)
 
-  useEffect(() =>   {
+  useEffect(() => {
     fetchTattoos()
   }, [])
 
@@ -34,8 +34,10 @@ export default function TattoosAdminPage() {
       if (!response.ok) throw new Error('Failed to fetch tattoos')
       const data = await response.json()
       setTattoos(data)
-    } catch (err) {
-      setError('Error al cargar los tatuajes')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al cargar los tatuajes'
+      setError(errorMessage)
+      console.error('Error fetching tattoos:', error)
     } finally {
       setLoading(false)
     }
@@ -62,8 +64,10 @@ export default function TattoosAdminPage() {
       if (!response.ok) throw new Error('Failed to update tattoo')
       fetchTattoos()
       setEditingTattoo(null)
-    } catch (err) {
-      setError('Error al actualizar el tatuaje')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al actualizar el tatuaje'
+      setError(errorMessage)
+      console.error('Error updating tattoo:', error)
     }
   }
 
@@ -80,8 +84,10 @@ export default function TattoosAdminPage() {
       })
       if (!response.ok) throw new Error('Failed to delete tattoo')
       fetchTattoos()
-    } catch (err) {
-      setError('Error al eliminar el tatuaje')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al eliminar el tatuaje'
+      setError(errorMessage)
+      console.error('Error deleting tattoo:', error)
     }
   }
 
@@ -100,52 +106,145 @@ export default function TattoosAdminPage() {
       if (!response.ok) throw new Error('Failed to add tattoo')
       fetchTattoos()
       e.currentTarget.reset()
-    } catch (err) {
-      setError('Error al añadir el tatuaje')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al añadir el tatuaje'
+      setError(errorMessage)
+      console.error('Error adding tattoo:', error)
     }
   }
 
-  if (loading) return <div>Cargando...</div>
-  if (error) return <div>{error}</div>
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <strong className="font-bold">Error!</strong>
+        <span className="block sm:inline"> {error}</span>
+      </div>
+    )
+  }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Administrar Tatuajes</h1>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold text-purple-800 mb-8">Administrar Tatuajes</h1>
       
-      <form onSubmit={handleAdd} className="mb-8 p-4 bg-white shadow rounded">
-        <h2 className="text-xl font-semibold mb-2">Añadir Nuevo Tatuaje</h2>
+      <form onSubmit={handleAdd} className="mb-8 p-6 bg-white rounded-lg shadow-md">
+        <h2 className="text-xl font-semibold mb-4">Añadir Nuevo Tatuaje</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input name="name" placeholder="Nombre" required className="p-2 border rounded" />
-          <input name="description" placeholder="Descripción" required className="p-2 border rounded" />
-          <input name="date" type="date" required className="p-2 border rounded" />
-          <input name="image" type="file" accept="image/*" required className="p-2 border rounded" />
+          <input
+            name="name"
+            placeholder="Nombre"
+            required
+            className="p-2 border rounded focus:ring-2 focus:ring-purple-500"
+          />
+          <input
+            name="description"
+            placeholder="Descripción"
+            required
+            className="p-2 border rounded focus:ring-2 focus:ring-purple-500"
+          />
+          <input
+            name="date"
+            type="date"
+            required
+            className="p-2 border rounded focus:ring-2 focus:ring-purple-500"
+          />
+          <input
+            name="image"
+            type="file"
+            accept="image/*"
+            required
+            className="p-2 border rounded focus:ring-2 focus:ring-purple-500"
+          />
         </div>
-        <button type="submit" className="mt-4 bg-green-500 text-white p-2 rounded">Añadir Tatuaje</button>
+        <button
+          type="submit"
+          className="mt-4 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors"
+        >
+          Añadir Tatuaje
+        </button>
       </form>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {tattoos.map(tattoo => (
-          <div key={tattoo.id} className="bg-white p-4 shadow rounded">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {tattoos.map((tattoo) => (
+          <div key={tattoo.id} className="bg-white rounded-lg shadow-md overflow-hidden">
             {editingTattoo?.id === tattoo.id ? (
-              <form onSubmit={handleSave}>
-                <input name="name" defaultValue={tattoo.name} required className="w-full p-2 mb-2 border rounded" />
-                <input name="description" defaultValue={tattoo.description} required className="w-full p-2 mb-2 border rounded" />
-                <input name="date" type="date" defaultValue={tattoo.date} required className="w-full p-2 mb-2 border rounded" />
-                <input name="image" type="file" accept="image/*" className="w-full p-2 mb-2 border rounded" />
-                <div className="flex justify-between">
-                  <button type="submit" className="bg-green-500 text-white p-2 rounded">Guardar</button>
-                  <button type="button" onClick={() => setEditingTattoo(null)} className="bg-gray-500 text-white p-2 rounded">Cancelar</button>
+              <form onSubmit={handleSave} className="p-4">
+                <input
+                  name="name"
+                  defaultValue={tattoo.name}
+                  required
+                  className="w-full p-2 mb-2 border rounded"
+                />
+                <input
+                  name="description"
+                  defaultValue={tattoo.description}
+                  required
+                  className="w-full p-2 mb-2 border rounded"
+                />
+                <input
+                  name="date"
+                  type="date"
+                  defaultValue={tattoo.date}
+                  required
+                  className="w-full p-2 mb-2 border rounded"
+                />
+                <input
+                  name="image"
+                  type="file"
+                  accept="image/*"
+                  className="w-full p-2 mb-2 border rounded"
+                />
+                <div className="flex justify-between gap-2">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-green-500 text-white p-2 rounded hover:bg-green-600"
+                  >
+                    Guardar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingTattoo(null)}
+                    className="flex-1 bg-gray-500 text-white p-2 rounded hover:bg-gray-600"
+                  >
+                    Cancelar
+                  </button>
                 </div>
               </form>
             ) : (
               <>
-                <Image src={`data:image/jpeg;base64,${tattoo.image}`} alt={tattoo.name} width={200} height={200} className="w-full h-48 object-cover mb-2 rounded" />
-                <h3 className="font-bold">{tattoo.name}</h3>
-                <p>{tattoo.description}</p>
-                <p className="text-sm text-gray-500">{new Date(tattoo.date).toLocaleDateString()}</p>
-                <div className="flex justify-between mt-2">
-                  <button onClick={() => handleEdit(tattoo)} className="bg-blue-500 text-white p-2 rounded">Editar</button>
-                  <button onClick={() => handleDelete(tattoo.id)} className="bg-red-500 text-white p-2 rounded">Eliminar</button>
+                <div className="relative h-48 w-full">
+                  <Image
+                    src={`data:image/jpeg;base64,${tattoo.image}`}
+                    alt={tattoo.name}
+                    layout="fill"
+                    objectFit="cover"
+                  />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-lg mb-2">{tattoo.name}</h3>
+                  <p className="text-gray-600 mb-2">{tattoo.description}</p>
+                  <p className="text-sm text-gray-500 mb-4">{new Date(tattoo.date).toLocaleDateString()}</p>
+                  <div className="flex justify-between gap-2">
+                    <button
+                      onClick={() => handleEdit(tattoo)}
+                      className="flex-1 bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleDelete(tattoo.id)}
+                      className="flex-1 bg-red-500 text-white p-2 rounded hover:bg-red-600"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
                 </div>
               </>
             )}
